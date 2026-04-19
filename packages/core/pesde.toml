@@ -1,0 +1,13 @@
+name = "picguin/core"
+version = "0.1.0"
+authors = ["LiterallyWize"]
+repository = "https://github.com/LiterallyWize/picguin"
+license = "MIT"
+includes = ["src/**/*", "pesde.toml"]
+
+[target]
+environment = "roblox"
+lib = "src/init.luau"
+
+[indices]
+default = "https://github.com/pesde-pkg/index"

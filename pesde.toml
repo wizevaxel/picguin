@@ -1,0 +1,14 @@
+name = "literallywize/picguin"
+private = true
+version = "0.1.0"
+authors = ["LiterallyWize"]
+repository = "https://github.com/LiterallyWize/picguin"
+license = "MIT"
+
+workspace_members = ["packages/*"]
+
+[target]
+environment = "roblox"
+
+[indices]
+default = "https://github.com/pesde-pkg/index"

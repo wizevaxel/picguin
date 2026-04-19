@@ -1,0 +1,6 @@
+luau_packages/
+lune_packages/
+roblox_packages/
+.pesde/
+
+*.lock
