@@ -1,9 +1,5 @@
 --!strict
 
-export type ErrorCode =
-	| "unsupported"
-	| "overflow"
-
 export type ColorFormat =
 	| "rgba8"
 	| "rgb8"
@@ -12,6 +8,15 @@ export type AlphaFormat =
 	| "alpha"
 	| "black"
 	| "white"
+
+export type ErrorCode =
+	| "unsupported"
+	| "overflow"
+
+export type DecodeError<Code> = {
+	code: Code,
+	message: string,
+}
 
 export type DecodeSource = buffer | string
 
