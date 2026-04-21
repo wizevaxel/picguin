@@ -1,6 +1,8 @@
 --!strict
 
-export type DecodeSource = buffer | string
+export type ErrorCode =
+	| "unsupported"
+	| "overflow"
 
 export type ColorFormat =
 	| "rgba8"
@@ -11,35 +13,37 @@ export type AlphaFormat =
 	| "black"
 	| "white"
 
-export type DecodeRegion = {
-	x: number,
-	y: number,
-	width: number,
-	height: number,
-}
+export type DecodeSource = buffer | string
 
-export type DecodeOptions = {
-	format: ColorFormat?,
-	frame: number?,
-	composite: boolean?,
-	alpha: AlphaFormat?,
-}
-
-export type DecodeResult = {
-	pixels: buffer,
-	region: DecodeRegion?,
-	duration: number?,
-}
-
-export type Decoder<Extension> = {
+export type Decoded<Extension> = {
 	codec: string,
 
 	width: number,
 	height: number,
 	frames: number,
 
-	pixels: (DecodeOptions) -> DecodeResult,
+	read: (ReadOptions) -> ReadResult,
 } & Extension
+
+export type ReadOptions = {
+	format: ColorFormat?,
+	frame: number?,
+	composite: boolean?,
+	alpha: AlphaFormat?,
+}
+
+export type ReadResult = {
+	bitmap: buffer,
+	region: PixelRegion?,
+	duration: number?,
+}
+
+export type PixelRegion = {
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+}
 
 local function convert_source(source: DecodeSource): buffer
 	return type(source) == "buffer" and source or buffer.fromstring(source)

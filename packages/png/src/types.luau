@@ -2,12 +2,20 @@
 
 local core = require("../roblox_packages/core")
 
+export type ErrorCode =
+	| core.ErrorCode
+	| "invalid_crc"
+
+export type DecodeContext = {
+	
+}
+
 export type DecodeOptions = {
 	crc: ("all" | "critical" | "none")?,
 	use: {AncillaryChunk}?,
 }
 
-export type Decoder = core.Decoder<{
+export type Decoded = core.Decoded<{
 	headers: {},
 }>
 
