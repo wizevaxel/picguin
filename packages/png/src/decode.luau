@@ -227,7 +227,7 @@ local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, Dec
 	err = parse_headers(context)
 	if err then return nil, err end
 
-	return context.decoded, {} :: DecodeError
+	return context.decoded, nil :: any
 end
 
 return function(source: core.DecodeSource, options: DecodeOptions): (Decoded?, DecodeError)
