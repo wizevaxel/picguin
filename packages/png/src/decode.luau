@@ -187,7 +187,7 @@ local function parse_headers(context: DecodeContext): DecodeError?
 
 			if crc_check == "all" or (critical and crc_check == "critical") then
 				local crc = bit32.byteswap(buffer.readu32(source, offset + chunk_length))
-				if crc ~= crc32(source, offset, chunk_length) then
+				if crc ~= crc32(source, offset - 4, chunk_length + 4) then
 					return decode_error("invalid_crc", `invalid checksum in {chunk_type} chunk`)
 				end
 			end
