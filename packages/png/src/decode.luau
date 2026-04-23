@@ -11,29 +11,211 @@ export type DecodeOptions = {
 }
 
 export type Decoded = core.Decoded<{
-	headers: {},
+	alpha: boolean,
+
+	headers: {
+		color_type: types.ColorType,
+		bit_depth: number,
+		channels: number,
+		interlacing: boolean,
+	}
 }>
 
 type DecodeContext = {
 	source: buffer,
+	length: number,
 	options: DecodeOptions,
 
 	byte: number,
 
+	use: {[types.Chunk]: true},
 	decoded: Decoded,
+}
+
+local function map<T>(array: {T}): {[T]: true}
+	local result: {[T]: true} = {}
+	for _, value in array do
+		result[value] = true
+	end
+
+	return result
+end
+
+local CRITICAL_CHUNK_MAP = map {
+	"IHDR",
+	"IDAT",
+	"PLTE",
+	"IEND",
+} :: {[types.CriticalChunk]: true} & {[types.AncillaryChunk]: nil}
+
+local ANCILLARY_CHUNK_MAP = map {
+	"tRNS",
+	"gAMA",
+	"cHRM",
+	"sRGB",
+	"iCCP",
+	"pHYs",
+	"bKGD",
+	"tEXt",
+	"iTXt",
+	"zTXt",
+	"tIME",
+	"eXIf",
+} :: {[types.AncillaryChunk]: true} & {[types.CriticalChunk]: nil}
+
+local BIT_DEPTH_MAP = {
+	[0] = map {1, 2, 4, 8, 16},
+	[2] = map {8, 16},
+	[3] = map {1, 2, 4, 8},
+	[4] = map {8, 16},
+	[6] = map {8, 16},
+}
+
+local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext, chunk_length: number) -> types.DecodeError?} = {
+	["IHDR"] = function(context, chunk_length)
+		local source = context.source
+		local byte = context.byte
+
+		if chunk_length ~= 13 then
+			return {
+				code = "invalid_length",
+				message = `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`,
+			}
+		end
+
+		local width = bit32.byteswap(buffer.readu32(source, byte))
+		local height = bit32.byteswap(buffer.readu32(source, byte + 4))
+		if width == 0 or height == 0 then
+			return {
+				code = "invalid_header",
+				message = `invalid image dimensions: {width}x{height}`,
+			}
+		end
+
+		local bit_depth = buffer.readu8(source, byte + 8)
+		local color_space = buffer.readu8(source, byte + 9)
+		if not BIT_DEPTH_MAP[color_space] then
+			return {
+				code = "invalid_header",
+				message = `invalid color space: {color_space}`,
+			}
+		elseif not BIT_DEPTH_MAP[color_space][bit_depth] then
+			return {
+				code = "invalid_header",
+				message = `invalid bit depth: {bit_depth}`,
+			}
+		end
+
+		local compression = buffer.readu8(source, byte + 10)
+		if compression > 0 then
+			return {
+				code = "unsupported",
+				message = `unsupported compression method: {compression}`,
+			}
+		end
+
+		local filtering = buffer.readu8(source, byte + 11)
+		if filtering > 0 then
+			return {
+				code = "unsupported",
+				message = `unsupported filter method: {filtering}`,
+			}
+		end
+
+		local interlacing = buffer.readu8(source, byte + 12)
+		if interlacing < 0 or interlacing > 1 then
+			return {
+				code = "invalid_header",
+				message = `invalid interlacing specifier: {interlacing}`,
+			}
+		end
+
+		local has_alpha = color_space > 3
+
+		local color_type: types.ColorType =
+			(color_space % 4 == 0 and "grayscale")
+			or (color_space == 3 and "indexed")
+			or "truecolor"
+
+		local channels = 1
+			+ (color_type == "truecolor" and 2 or 0)
+			+ (has_alpha and 1 or 0)
+
+		local decoded = context.decoded
+		decoded.width = width
+		decoded.height = height
+		decoded.alpha = has_alpha
+
+		decoded.headers.color_type = color_type
+		decoded.headers.bit_depth = bit_depth
+		decoded.headers.channels = channels
+		decoded.headers.interlacing = interlacing == 1
+
+		context.byte += 13
+
+		return nil
+	end
 }
 
 local function parse_headers(context: DecodeContext): types.DecodeError?
 	local source = context.source
+	local length = context.length
 	local byte = context.byte
 
 	local signature = buffer.readstring(source, byte, 8)
 	if signature ~= "\137PNG\r\n\26\n" then
 		return {
 			code = "invalid_signature",
-			message = "invalid png signature",
+			message = "invalid PNG signature",
 		}
 	end
+
+	byte += 8
+
+	local options = context.options
+	local use = context.use
+	local crc = options.crc
+
+	while true do
+		if byte + 8 > length then
+			return {
+				code = "missing_iend",
+				message = "missing IEND chunk"
+			}
+		end
+
+		local chunk_length = bit32.byteswap(buffer.readu32(source, byte))
+		local chunk_type = buffer.readstring(source, byte + 4, 4) :: types.Chunk
+
+		byte += 8
+
+		if chunk_type == "IEND" then
+			break
+		elseif CRITICAL_CHUNK_MAP[chunk_type] then
+			context.byte = byte
+			parse_chunk[chunk_type](context, chunk_length)
+			if crc ~= "none" then
+				-- checksum
+			end
+
+			byte += 4
+		elseif use[chunk_type] then
+			context.byte = byte
+			parse_chunk[chunk_type](context, chunk_length)
+			if crc == "all" then
+				-- checksum
+			end
+
+			byte += 4
+		elseif not ANCILLARY_CHUNK_MAP[chunk_type] then
+			return {
+				code = "invalid_chunk",
+				message = `invalid chunk type: {chunk_type}`
+			}
+		end
+	end
+
+	context.byte = byte
 
 	return nil
 end
@@ -41,20 +223,16 @@ end
 local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, types.DecodeError)
 	local context: DecodeContext = {
 		source = source,
+		length = buffer.len(source),
 		options = options,
 
 		byte = 0,
 
+		use = map((options.use or {}) :: {types.Chunk}),
 		decoded = {
 			codec = "png",
 
-			width = 0,
-			height = 0,
-			frames = 0,
-
 			headers = {},
-
-			read = function() end,
 		} :: Decoded,
 	}
 
