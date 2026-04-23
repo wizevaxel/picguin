@@ -5,12 +5,26 @@
 local core = require("../roblox_packages/core")
 local types = require("./types")
 
+export type DecodeErrorCode =
+	| core.ErrorCode
+	| "invalid_signature"
+	| "invalid_crc"
+	| "invalid_length"
+	| "invalid_header"
+	| "invalid_chunk"
+	| "missing_iend"
+export type DecodeError = core.Error<DecodeErrorCode>
+
+export type ReadErrorCode =
+	| core.ErrorCode
+export type ReadError = core.Error<ReadErrorCode>
+
 export type DecodeOptions = {
 	crc: ("all" | "critical" | "none")?,
 	use: {types.AncillaryChunk}?,
 }
 
-export type Decoded = core.Decoded<{
+export type Decoded = core.Decoded<ReadErrorCode, {
 	alpha: boolean,
 
 	headers: {
@@ -71,7 +85,7 @@ local BIT_DEPTH_MAP = {
 	[6] = map {8, 16},
 }
 
-local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext, chunk_length: number) -> types.DecodeError?} = {
+local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext, chunk_length: number) -> DecodeError?} = {
 	["IHDR"] = function(context, chunk_length)
 		local source = context.source
 		local byte = context.byte
@@ -157,7 +171,7 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 	end
 }
 
-local function parse_headers(context: DecodeContext): types.DecodeError?
+local function parse_headers(context: DecodeContext): DecodeError?
 	local source = context.source
 	local length = context.length
 	local byte = context.byte
@@ -220,7 +234,7 @@ local function parse_headers(context: DecodeContext): types.DecodeError?
 	return nil
 end
 
-local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, types.DecodeError)
+local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, DecodeError)
 	local context: DecodeContext = {
 		source = source,
 		length = buffer.len(source),
@@ -236,14 +250,14 @@ local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, typ
 		} :: Decoded,
 	}
 
-	local err: types.DecodeError?
+	local err: DecodeError?
 
 	err = parse_headers(context)
 	if err then return nil, err end
 
-	return context.decoded, {} :: types.DecodeError
+	return context.decoded, {} :: DecodeError
 end
 
-return function(source: core.DecodeSource, options: DecodeOptions): (Decoded?, types.DecodeError)
+return function(source: core.DecodeSource, options: DecodeOptions): (Decoded?, DecodeError)
 	return parse_png(core.convert_source(source), options)
 end

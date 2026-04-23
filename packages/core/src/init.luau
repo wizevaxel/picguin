@@ -13,21 +13,20 @@ export type ErrorCode =
 	| "unsupported"
 	| "overflow"
 
-export type DecodeError<Code> = {
+export type Error<Code> = {
 	code: Code,
 	message: string,
 }
 
 export type DecodeSource = buffer | string
 
-export type Decoded<Extension> = {
+export type Decoded<ReadErrorCode, Extension> = {
 	codec: string,
 
 	width: number,
 	height: number,
-	frames: number,
 
-	read: (ReadOptions) -> ReadResult,
+	read: (ReadOptions) -> (ReadResult?, Error<ReadErrorCode>),
 } & Extension
 
 export type ReadOptions = {

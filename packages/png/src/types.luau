@@ -2,17 +2,6 @@
 
 local core = require("../roblox_packages/core")
 
-export type ErrorCode =
-	| core.ErrorCode
-	| "invalid_signature"
-	| "invalid_crc"
-	| "invalid_length"
-	| "invalid_header"
-	| "invalid_chunk"
-	| "missing_iend"
-
-export type DecodeError = core.DecodeError<ErrorCode>
-
 export type ColorType =
 	| "truecolor"
 	| "grayscale"
