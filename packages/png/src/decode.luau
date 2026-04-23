@@ -38,11 +38,10 @@ export type Decoded = core.Decoded<ReadErrorCode, {
 type DecodeContext = {
 	source: buffer,
 	length: number,
-	options: DecodeOptions,
-
-	byte: number,
+	offset: number,
 
 	use: {[types.Chunk]: true},
+	options: DecodeOptions,
 	decoded: Decoded,
 }
 
@@ -88,7 +87,7 @@ local BIT_DEPTH_MAP = {
 local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext, chunk_length: number) -> DecodeError?} = {
 	["IHDR"] = function(context, chunk_length)
 		local source = context.source
-		local byte = context.byte
+		local offset = context.offset
 
 		if chunk_length ~= 13 then
 			return {
@@ -97,8 +96,8 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 			}
 		end
 
-		local width = bit32.byteswap(buffer.readu32(source, byte))
-		local height = bit32.byteswap(buffer.readu32(source, byte + 4))
+		local width = bit32.byteswap(buffer.readu32(source, offset))
+		local height = bit32.byteswap(buffer.readu32(source, offset + 4))
 		if width == 0 or height == 0 then
 			return {
 				code = "invalid_header",
@@ -106,8 +105,8 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 			}
 		end
 
-		local bit_depth = buffer.readu8(source, byte + 8)
-		local color_space = buffer.readu8(source, byte + 9)
+		local bit_depth = buffer.readu8(source, offset + 8)
+		local color_space = buffer.readu8(source, offset + 9)
 		if not BIT_DEPTH_MAP[color_space] then
 			return {
 				code = "invalid_header",
@@ -120,7 +119,7 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 			}
 		end
 
-		local compression = buffer.readu8(source, byte + 10)
+		local compression = buffer.readu8(source, offset + 10)
 		if compression > 0 then
 			return {
 				code = "unsupported",
@@ -128,7 +127,7 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 			}
 		end
 
-		local filtering = buffer.readu8(source, byte + 11)
+		local filtering = buffer.readu8(source, offset + 11)
 		if filtering > 0 then
 			return {
 				code = "unsupported",
@@ -136,7 +135,7 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 			}
 		end
 
-		local interlacing = buffer.readu8(source, byte + 12)
+		local interlacing = buffer.readu8(source, offset + 12)
 		if interlacing < 0 or interlacing > 1 then
 			return {
 				code = "invalid_header",
@@ -165,7 +164,7 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 		decoded.headers.channels = channels
 		decoded.headers.interlacing = interlacing == 1
 
-		context.byte += 13
+		context.offset += 13
 
 		return nil
 	end
@@ -174,9 +173,9 @@ local parse_chunk: {[types.CriticalChunk | types.AncillaryChunk]: (DecodeContext
 local function parse_headers(context: DecodeContext): DecodeError?
 	local source = context.source
 	local length = context.length
-	local byte = context.byte
+	local offset = context.offset
 
-	local signature = buffer.readstring(source, byte, 8)
+	local signature = buffer.readstring(source, offset, 8)
 	if signature ~= "\137PNG\r\n\26\n" then
 		return {
 			code = "invalid_signature",
@@ -184,43 +183,40 @@ local function parse_headers(context: DecodeContext): DecodeError?
 		}
 	end
 
-	byte += 8
+	offset += 8
 
 	local options = context.options
 	local use = context.use
 	local crc = options.crc
 
 	while true do
-		if byte + 8 > length then
+		if offset + 8 > length then
 			return {
 				code = "missing_iend",
 				message = "missing IEND chunk"
 			}
 		end
 
-		local chunk_length = bit32.byteswap(buffer.readu32(source, byte))
-		local chunk_type = buffer.readstring(source, byte + 4, 4) :: types.Chunk
-
-		byte += 8
+		local chunk_length = bit32.byteswap(buffer.readu32(source, offset))
+		local chunk_type = buffer.readstring(source, offset + 4, 4) :: types.Chunk
+		offset += 8
 
 		if chunk_type == "IEND" then
 			break
 		elseif CRITICAL_CHUNK_MAP[chunk_type] then
-			context.byte = byte
+			context.offset = offset
 			parse_chunk[chunk_type](context, chunk_length)
 			if crc ~= "none" then
 				-- checksum
 			end
-
-			byte += 4
+			offset += 4
 		elseif use[chunk_type] then
-			context.byte = byte
+			context.offset = offset
 			parse_chunk[chunk_type](context, chunk_length)
 			if crc == "all" then
 				-- checksum
 			end
-
-			byte += 4
+			offset += 4
 		elseif not ANCILLARY_CHUNK_MAP[chunk_type] then
 			return {
 				code = "invalid_chunk",
@@ -229,7 +225,7 @@ local function parse_headers(context: DecodeContext): DecodeError?
 		end
 	end
 
-	context.byte = byte
+	context.offset = offset
 
 	return nil
 end
@@ -238,11 +234,10 @@ local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, Dec
 	local context: DecodeContext = {
 		source = source,
 		length = buffer.len(source),
-		options = options,
-
-		byte = 0,
+		offset = 0,
 
 		use = map((options.use or {}) :: {types.Chunk}),
+		options = options,
 		decoded = {
 			codec = "png",
 
