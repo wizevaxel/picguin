@@ -63,12 +63,19 @@ local ANCILLARY_CHUNK_MAP = map {
 	"iTXt", "zTXt", "tIME", "eXIf",
 } :: {[types.AncillaryChunk]: true} & {[types.CriticalChunk]: nil}
 
-local BIT_DEPTH_MAP = {
+local BIT_DEPTH_MAP: {[number]: {[number]: true}} = {
 	[0] = map {1, 2, 4, 8, 16},
 	[2] = map {8, 16},
 	[3] = map {1, 2, 4, 8},
 	[4] = map {8, 16},
 	[6] = map {8, 16},
+}
+local COLOR_TYPE_MAP: {[number]: types.ColorType} = {
+	[0] = "grayscale",
+	[2] = "truecolor",
+	[3] = "indexed",
+	[4] = "grayscale",
+	[6] = "truecolor",
 }
 
 local function decode_error(code: DecodeErrorCode, message: string): DecodeError
@@ -78,7 +85,7 @@ local function decode_error(code: DecodeErrorCode, message: string): DecodeError
 	}
 end
 
-local parse_chunk: {[types.Chunk]: (DecodeContext, chunk_length: number) -> DecodeError?} = {
+local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) -> DecodeError?} = {
 	["IHDR"] = function(context, chunk_length)
 		if chunk_length ~= 13 then
 			return decode_error("invalid_length", `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`)
@@ -112,20 +119,13 @@ local parse_chunk: {[types.Chunk]: (DecodeContext, chunk_length: number) -> Deco
 		end
 
 		local interlacing = buffer.readu8(source, offset + 12)
-		if interlacing < 0 or interlacing > 1 then
+		if interlacing > 1 then
 			return decode_error("invalid_header", `invalid interlacing specifier: {interlacing}`)
 		end
 
 		local has_alpha = color_space > 3
-
-		local color_type: types.ColorType =
-			(color_space % 4 == 0 and "grayscale")
-			or (color_space == 3 and "indexed")
-			or "truecolor"
-
-		local channels = 1
-			+ (color_type == "truecolor" and 2 or 0)
-			+ (has_alpha and 1 or 0)
+		local color_type = COLOR_TYPE_MAP[color_space]
+		local channels = 1 + (color_type == "truecolor" and 2 or 0) + (has_alpha and 1 or 0)
 
 		local decoded = context.decoded
 		decoded.width = width
@@ -182,7 +182,7 @@ local function parse_headers(context: DecodeContext): DecodeError?
 
 		local critical = CRITICAL_CHUNK_MAP[chunk_type] ~= nil
 		if critical or use[chunk_type] then
-			local parser = parse_chunk[chunk_type]
+			local parser = CHUNK_PARSER_MAP[chunk_type]
 			if parser then
 				context.offset = offset
 				local err = parser(context, chunk_length)
