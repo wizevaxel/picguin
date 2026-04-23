@@ -12,6 +12,7 @@ export type AlphaFormat =
 export type ErrorCode =
 	| "unsupported"
 	| "overflow"
+	| "unexpected_eof"
 
 export type Error<Code> = {
 	code: Code,

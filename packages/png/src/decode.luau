@@ -12,7 +12,6 @@ export type DecodeErrorCode =
 	| "invalid_length"
 	| "invalid_header"
 	| "invalid_chunk"
-	| "missing_iend"
 export type DecodeError = core.Error<DecodeErrorCode>
 
 export type ReadErrorCode =
@@ -175,6 +174,13 @@ local function parse_headers(context: DecodeContext): DecodeError?
 	local length = context.length
 	local offset = context.offset
 
+	if offset + 8 > length then
+		return {
+			code = "unexpected_eof",
+			message = "EOF while reading signature"
+		}
+	end
+
 	local signature = buffer.readstring(source, offset, 8)
 	if signature ~= "\137PNG\r\n\26\n" then
 		return {
@@ -192,8 +198,8 @@ local function parse_headers(context: DecodeContext): DecodeError?
 	while true do
 		if offset + 8 > length then
 			return {
-				code = "missing_iend",
-				message = "missing IEND chunk"
+				code = "unexpected_eof",
+				message = "EOF without IEND chunk"
 			}
 		end
 
@@ -203,7 +209,16 @@ local function parse_headers(context: DecodeContext): DecodeError?
 
 		if chunk_type == "IEND" then
 			break
-		elseif CRITICAL_CHUNK_MAP[chunk_type] then
+		else
+			if offset + chunk_length + 4 > length then
+				return {
+					code = "unexpected_eof",
+					message = `EOF while reading {chunk_type} chunk`
+				}
+			end
+		end
+
+		if CRITICAL_CHUNK_MAP[chunk_type] then
 			context.offset = offset
 			parse_chunk[chunk_type](context, chunk_length)
 			if crc ~= "none" then
