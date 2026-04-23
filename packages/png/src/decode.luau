@@ -182,8 +182,12 @@ local function parse_headers(context: DecodeContext): DecodeError?
 
 		local critical = CRITICAL_CHUNK_MAP[chunk_type] ~= nil
 		if critical or use[chunk_type] then
-			context.offset = offset
-			parse_chunk[chunk_type](context, chunk_length)
+			local parser = parse_chunk[chunk_type]
+			if parser then
+				context.offset = offset
+				local err = parser(context, chunk_length)
+				if err then return err end
+			end
 
 			if crc_check == "all" or (critical and crc_check == "critical") then
 				local crc = bit32.byteswap(buffer.readu32(source, offset + chunk_length))
