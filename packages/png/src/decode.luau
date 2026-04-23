@@ -28,7 +28,7 @@ export type Decoded = core.Decoded<ReadErrorCode, {
 	alpha: boolean,
 
 	headers: {
-		color_type: types.ColorType,
+		color_space: types.ColorSpace,
 		bit_depth: number,
 		channels: number,
 		interlacing: boolean,
@@ -70,7 +70,7 @@ local BIT_DEPTH_MAP: {[number]: {[number]: true}} = {
 	[4] = map {8, 16},
 	[6] = map {8, 16},
 }
-local COLOR_TYPE_MAP: {[number]: types.ColorType} = {
+local COLOR_SPACE_MAP: {[number]: types.ColorSpace} = {
 	[0] = "grayscale",
 	[2] = "truecolor",
 	[3] = "indexed",
@@ -101,10 +101,10 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) ->
 		end
 
 		local bit_depth = buffer.readu8(source, offset + 8)
-		local color_space = buffer.readu8(source, offset + 9)
-		if not BIT_DEPTH_MAP[color_space] then
-			return decode_error("invalid_header", `invalid color space: {color_space}`)
-		elseif not BIT_DEPTH_MAP[color_space][bit_depth] then
+		local color_type = buffer.readu8(source, offset + 9)
+		if not BIT_DEPTH_MAP[color_type] then
+			return decode_error("invalid_header", `invalid color type: {color_type}`)
+		elseif not BIT_DEPTH_MAP[color_type][bit_depth] then
 			return decode_error("invalid_header", `invalid bit depth: {bit_depth}`)
 		end
 
@@ -123,16 +123,16 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) ->
 			return decode_error("invalid_header", `invalid interlacing specifier: {interlacing}`)
 		end
 
-		local has_alpha = color_space > 3
-		local color_type = COLOR_TYPE_MAP[color_space]
-		local channels = 1 + (color_type == "truecolor" and 2 or 0) + (has_alpha and 1 or 0)
+		local has_alpha = color_type > 3
+		local color_space = COLOR_SPACE_MAP[color_type]
+		local channels = 1 + (color_space == "truecolor" and 2 or 0) + (has_alpha and 1 or 0)
 
 		local decoded = context.decoded
 		decoded.width = width
 		decoded.height = height
 		decoded.alpha = has_alpha
 
-		decoded.headers.color_type = color_type
+		decoded.headers.color_space = color_space
 		decoded.headers.bit_depth = bit_depth
 		decoded.headers.channels = channels
 		decoded.headers.interlacing = interlacing == 1

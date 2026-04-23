@@ -13,7 +13,7 @@ export type ReadOptions = core.ReadOptions
 export type ReadResult = core.ReadResult
 export type PixelRegion = core.PixelRegion
 
-export type ColorType = types.ColorType
+export type ColorSpace = types.ColorSpace
 export type CriticalChunk = types.CriticalChunk
 export type AncillaryChunk = types.AncillaryChunk
 export type Chunk = types.Chunk

@@ -2,7 +2,7 @@
 
 local core = require("../roblox_packages/core")
 
-export type ColorType = "truecolor" | "grayscale" | "indexed"
+export type ColorSpace = "truecolor" | "grayscale" | "indexed"
 
 export type CriticalChunk =
 	| "IHDR" | "IDAT" | "PLTE" | "IEND"
