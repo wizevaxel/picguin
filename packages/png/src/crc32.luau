@@ -2,7 +2,8 @@
 --!native
 --!optimize 2
 
-local lookup = table.create(256, 0)
+local LOOKUP = table.create(256, 0)
+
 for i = 0, 255 do
 	local crc = i
 	for _ = 1, 8 do
@@ -12,13 +13,15 @@ for i = 0, 255 do
 			crc //= 2
 		end
 	end
-	lookup[i + 1] = crc
+
+	LOOKUP[i + 1] = crc
 end
 
 return function(source: buffer, offset: number, length: number): number
 	local crc = 0xFFFFFFFF
 	for i = offset, offset + length - 1 do
-		crc = bit32.bxor(lookup[bit32.bxor(crc % 256, buffer.readu8(source, i)) + 1], crc // 256)
+		crc = bit32.bxor(LOOKUP[bit32.bxor(crc % 256, buffer.readu8(source, i)) + 1], crc // 256)
 	end
+
 	return bit32.bxor(crc, 0xFFFFFFFF)
 end
