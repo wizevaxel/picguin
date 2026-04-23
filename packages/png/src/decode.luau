@@ -54,6 +54,10 @@ local function map<T>(array: {T}): {[T]: true}
 	return result
 end
 
+local function decode_error(code: DecodeErrorCode, message: string): DecodeError
+	return {code = code, message = message}
+end
+
 local CRITICAL_CHUNK_MAP = map {
 	"IHDR", "IDAT", "PLTE", "IEND",
 } :: {[types.CriticalChunk]: true} & {[types.AncillaryChunk]: nil}
@@ -63,27 +67,13 @@ local ANCILLARY_CHUNK_MAP = map {
 	"iTXt", "zTXt", "tIME", "eXIf",
 } :: {[types.AncillaryChunk]: true} & {[types.CriticalChunk]: nil}
 
-local BIT_DEPTH_MAP: {[number]: {[number]: true}} = {
-	[0] = map {1, 2, 4, 8, 16},
-	[2] = map {8, 16},
-	[3] = map {1, 2, 4, 8},
-	[4] = map {8, 16},
-	[6] = map {8, 16},
+local COLOR_TYPE_MAP: {[number]: {color_space: types.ColorSpace, bit_depths: {[number]: true}}} = {
+	[0] = {color_space = "grayscale", bit_depths = map {1, 2, 4, 8, 16}},
+	[2] = {color_space = "truecolor", bit_depths = map {8, 16}},
+	[3] = {color_space = "indexed", bit_depths =  map {1, 2, 4, 8}},
+	[4] = {color_space = "grayscale", bit_depths = map {8, 16}},
+	[6] = {color_space = "truecolor", bit_depths = map {8, 16}},
 }
-local COLOR_SPACE_MAP: {[number]: types.ColorSpace} = {
-	[0] = "grayscale",
-	[2] = "truecolor",
-	[3] = "indexed",
-	[4] = "grayscale",
-	[6] = "truecolor",
-}
-
-local function decode_error(code: DecodeErrorCode, message: string): DecodeError
-	return {
-		code = code,
-		message = message,
-	}
-end
 
 local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) -> DecodeError?} = {
 	["IHDR"] = function(context, chunk_length)
@@ -102,9 +92,11 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) ->
 
 		local bit_depth = buffer.readu8(source, offset + 8)
 		local color_type = buffer.readu8(source, offset + 9)
-		if not BIT_DEPTH_MAP[color_type] then
+
+		local color_info = COLOR_TYPE_MAP[color_type]
+		if not color_info then
 			return decode_error("invalid_header", `invalid color type: {color_type}`)
-		elseif not BIT_DEPTH_MAP[color_type][bit_depth] then
+		elseif not color_info.bit_depths[bit_depth] then
 			return decode_error("invalid_header", `invalid bit depth: {bit_depth}`)
 		end
 
@@ -123,18 +115,17 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) ->
 			return decode_error("invalid_header", `invalid interlacing specifier: {interlacing}`)
 		end
 
-		local has_alpha = color_type > 3
-		local color_space = COLOR_SPACE_MAP[color_type]
-		local channels = 1 + (color_space == "truecolor" and 2 or 0) + (has_alpha and 1 or 0)
+		local alpha = color_type > 3
+		local color_space = color_info.color_space
 
 		local decoded = context.decoded
 		decoded.width = width
 		decoded.height = height
-		decoded.alpha = has_alpha
+		decoded.alpha = alpha
 
 		decoded.headers.color_space = color_space
 		decoded.headers.bit_depth = bit_depth
-		decoded.headers.channels = channels
+		decoded.headers.channels = 1 + (color_space == "truecolor" and 2 or 0) + (alpha and 1 or 0)
 		decoded.headers.interlacing = interlacing == 1
 
 		context.offset += 13
@@ -143,7 +134,7 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) ->
 	end
 }
 
-local function parse_headers(context: DecodeContext): DecodeError?
+local function parse_png(context: DecodeContext): DecodeError?
 	local source = context.source
 	local length = context.length
 	local offset = context.offset
@@ -161,7 +152,7 @@ local function parse_headers(context: DecodeContext): DecodeError?
 
 	local options = context.options
 	local use = context.use
-	local crc_check = options.crc
+	local crc_mode = options.crc
 
 	while true do
 		if offset + 8 > length then
@@ -172,12 +163,10 @@ local function parse_headers(context: DecodeContext): DecodeError?
 		local chunk_type = buffer.readstring(source, offset + 4, 4) :: types.Chunk
 		offset += 8
 
-		if chunk_type == "IEND" then
-			break
-		else
-			if offset + chunk_length + 4 > length then
-				return decode_error("unexpected_eof", `EOF while reading {chunk_type} chunk`)
-			end
+		if chunk_type == "IEND" then break end
+
+		if offset + chunk_length + 4 > length then
+			return decode_error("unexpected_eof", `EOF while reading {chunk_type} chunk`)
 		end
 
 		local critical = CRITICAL_CHUNK_MAP[chunk_type] ~= nil
@@ -189,7 +178,7 @@ local function parse_headers(context: DecodeContext): DecodeError?
 				if err then return err end
 			end
 
-			if crc_check == "all" or (critical and crc_check == "critical") then
+			if crc_mode == "all" or (critical and crc_mode == "critical") then
 				local crc = bit32.byteswap(buffer.readu32(source, offset + chunk_length))
 				if crc ~= crc32(source, offset - 4, chunk_length + 4) then
 					return decode_error("invalid_crc", `invalid checksum in {chunk_type} chunk`)
@@ -207,7 +196,9 @@ local function parse_headers(context: DecodeContext): DecodeError?
 	return nil
 end
 
-local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, DecodeError)
+return function(source: core.DecodeSource, options: DecodeOptions): (Decoded?, DecodeError)
+	source = core.convert_source(source)
+
 	local context: DecodeContext = {
 		source = source,
 		length = buffer.len(source),
@@ -222,14 +213,8 @@ local function parse_png(source: buffer, options: DecodeOptions): (Decoded?, Dec
 		} :: Decoded,
 	}
 
-	local err: DecodeError?
-
-	err = parse_headers(context)
+	local err = parse_png(context)
 	if err then return nil, err end
 
 	return context.decoded, nil :: any
-end
-
-return function(source: core.DecodeSource, options: DecodeOptions): (Decoded?, DecodeError)
-	return parse_png(core.convert_source(source), options)
 end
