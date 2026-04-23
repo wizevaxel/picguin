@@ -4,6 +4,7 @@
 
 local core = require("../roblox_packages/core")
 local types = require("./types")
+local crc32 = require("./crc32")
 
 export type DecodeErrorCode =
 	| core.ErrorCode
@@ -193,7 +194,8 @@ local function parse_headers(context: DecodeContext): DecodeError?
 
 	local options = context.options
 	local use = context.use
-	local crc = options.crc
+
+	local crc_check = options.crc
 
 	while true do
 		if offset + 8 > length then
@@ -221,17 +223,31 @@ local function parse_headers(context: DecodeContext): DecodeError?
 		if CRITICAL_CHUNK_MAP[chunk_type] then
 			context.offset = offset
 			parse_chunk[chunk_type](context, chunk_length)
-			if crc ~= "none" then
-				-- checksum
+
+			if crc_check ~= "none" then
+				local crc = bit32.byteswap(buffer.readu32(source, offset + chunk_length))
+				if crc ~= crc32(source, offset, chunk_length) then
+					return {
+						code = "invalid_crc",
+						message = `invalid checksum in {chunk_type} chunk`
+					}
+				end
 			end
-			offset += 4
+			offset += chunk_length + 4
 		elseif use[chunk_type] then
 			context.offset = offset
 			parse_chunk[chunk_type](context, chunk_length)
-			if crc == "all" then
-				-- checksum
+
+			if crc_check == "all" then
+				local crc = bit32.byteswap(buffer.readu32(source, offset + chunk_length))
+				if crc ~= crc32(source, offset, chunk_length) then
+					return {
+						code = "invalid_crc",
+						message = `invalid checksum in {chunk_type} chunk`
+					}
+				end
 			end
-			offset += 4
+			offset += chunk_length + 4
 		elseif not ANCILLARY_CHUNK_MAP[chunk_type] then
 			return {
 				code = "invalid_chunk",
