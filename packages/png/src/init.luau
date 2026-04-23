@@ -14,9 +14,9 @@ export type ReadResult = core.ReadResult
 export type PixelRegion = core.PixelRegion
 
 export type ColorType = types.ColorType
-export type Chunk = types.Chunk
 export type CriticalChunk = types.CriticalChunk
 export type AncillaryChunk = types.AncillaryChunk
+export type Chunk = types.Chunk
 
 export type DecodeErrorCode = decode.DecodeErrorCode
 export type DecodeError = decode.DecodeError
