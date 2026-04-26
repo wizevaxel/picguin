@@ -32,7 +32,13 @@ export type Decoded = core.Decoded<ReadErrorCode, {
 		bit_depth: number,
 		channels: number,
 		interlacing: boolean,
-	}
+	},
+	_ranges: {
+		source: buffer,
+		["PLTE"]: SourceRanges,
+		["IDAT"]: SourceRanges,
+		["tRNS"]: SourceRanges,
+	},
 }>
 
 type DecodeContext = {
@@ -44,6 +50,8 @@ type DecodeContext = {
 	options: DecodeOptions,
 	decoded: Decoded,
 }
+
+type SourceRanges = {number}
 
 local function map<T>(array: {T}): {[T]: true}
 	local result: {[T]: true} = {}
@@ -131,7 +139,45 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, chunk_length: number) ->
 		context.offset += 13
 
 		return nil
-	end
+	end,
+	["PLTE"] = function(context, chunk_length)
+		if chunk_length % 3 ~= 0 then
+			return decode_error("invalid_length", `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`)
+		end
+
+		local offset = context.offset
+		context.decoded._ranges["PLTE"] = {offset, offset + chunk_length}
+
+		return nil
+	end,
+	["IDAT"] = function(context, chunk_length)
+		local source = context.source
+		local offset = context.offset
+
+		local ranges: SourceRanges = {offset, offset + chunk_length}
+
+		while true do
+			local next_offset = offset + chunk_length + 4
+
+			local next_type = buffer.readstring(source, next_offset + 4, 4) :: types.Chunk
+			if next_type ~= "IDAT" then break end
+
+			table.insert(ranges, next_offset)
+			table.insert(ranges, next_offset + bit32.byteswap(buffer.readu32(source, next_offset)))
+			offset = next_offset
+		end
+
+		context.decoded._ranges["IDAT"] = ranges
+		context.offset = offset
+
+		return nil
+	end,
+	["tRNS"] = function(context, chunk_length)
+		local offset = context.offset
+		context.decoded._ranges["tRNS"] = {offset, offset + chunk_length}
+
+		return nil
+	end,
 }
 
 local function parse_png(context: DecodeContext): DecodeError?
@@ -210,6 +256,7 @@ return function(source: core.DecodeSource, options: DecodeOptions): (Decoded?, D
 			codec = "png",
 
 			headers = {},
+			_ranges = {source = source},
 		} :: Decoded,
 	}
 
