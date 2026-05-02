@@ -26,7 +26,7 @@ export type ReadError = decode.ReadError
 export type DecodeOptions = decode.DecodeOptions
 export type Decoded = decode.Decoded
 
-return {
+return table.freeze {
 	decode = decode,
 	encode = encode,
 }
