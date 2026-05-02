@@ -1,4 +1,5 @@
 --!strict
+--!optimize 2
 
 local core = require("../roblox_packages/core")
 

@@ -1,4 +1,5 @@
 --!strict
+--!optimize 2
 
 export type ColorFormat =
 	| "rgba8"
