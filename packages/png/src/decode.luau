@@ -34,6 +34,7 @@ export type Decoded = core.Decoded<ReadErrorCode, {
 		interlacing: boolean,
 	},
 	_ranges: {source: buffer} & {[types.Chunk]: SourceRanges},
+	_out_size: number,
 }>
 
 type DecodeContext = {
@@ -113,10 +114,13 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 		local interlacing = buffer.readu8(source, chunk_offset + 12)
 		if interlacing > 1 then
 			return decode_error("invalid_header", `invalid interlacing specifier: {interlacing}`)
+		elseif interlacing == 1 then
+			return decode_error("unsupported", "interlacing is not supported")
 		end
 
 		local alpha = color_type > 3
 		local color_space = color_info.color_space
+		local channels = (color_space == "truecolor" and 2 or 0) + (alpha and 1 or 0)
 
 		local decoded = context.decoded
 		decoded.width = width
@@ -125,8 +129,10 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 
 		decoded.headers.color_space = color_space
 		decoded.headers.bit_depth = bit_depth
-		decoded.headers.channels = 1 + (color_space == "truecolor" and 2 or 0) + (alpha and 1 or 0)
+		decoded.headers.channels = channels
 		decoded.headers.interlacing = interlacing == 1
+
+		decoded._out_size = height * ((width * channels * bit_depth + 7) // 8 + 1)
 
 		return nil
 	end,
