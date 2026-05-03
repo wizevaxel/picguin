@@ -48,13 +48,13 @@ type DecodeContext = {
 
 type SourceRanges = {number}
 
-local function map<T>(array: {T}): {[T]: true}
-	local result: {[T]: true} = {}
-	for _, value in array do
-		result[value] = true
+local function map<T>(t: {T}): {[T]: true}
+	local out: {[T]: true} = {}
+	for _, value in t do
+		out[value] = true
 	end
 
-	return result
+	return out
 end
 
 local function decode_error(code: DecodeErrorCode, message: string): DecodeError
