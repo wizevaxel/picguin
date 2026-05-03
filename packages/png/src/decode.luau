@@ -28,10 +28,10 @@ export type Decoded = core.Decoded<ReadErrorCode, {
 	alpha: boolean,
 
 	headers: {
+		interlacing: boolean,
 		color_space: types.ColorSpace,
 		bit_depth: number,
 		channels: number,
-		interlacing: boolean,
 	},
 	_ranges: {source: buffer} & {[types.Chunk]: SourceRanges},
 	_out_size: number,
@@ -61,6 +61,8 @@ end
 local function decode_error(code: DecodeErrorCode, message: string): DecodeError
 	return {code = code, message = message}
 end
+
+local MAX_BUFFER_SIZE = 2 ^ 30
 
 local SIGNATURE = "\x89PNG\x0D\x0A\x1A\x0A"
 
@@ -122,17 +124,22 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 		local color_space = color_info.color_space
 		local channels = (color_space == "truecolor" and 2 or 0) + (alpha and 1 or 0)
 
+		local out_size = height * ((width * channels * bit_depth + 7) // 8 + 1)
+		if out_size > MAX_BUFFER_SIZE then
+			return decode_error("overflow", `decompressed image data size exceeds buffer limits`)
+		end
+
 		local decoded = context.decoded
 		decoded.width = width
 		decoded.height = height
 		decoded.alpha = alpha
 
+		decoded.headers.interlacing = interlacing == 1
 		decoded.headers.color_space = color_space
 		decoded.headers.bit_depth = bit_depth
 		decoded.headers.channels = channels
-		decoded.headers.interlacing = interlacing == 1
 
-		decoded._out_size = height * ((width * channels * bit_depth + 7) // 8 + 1)
+		decoded._out_size = out_size
 
 		return nil
 	end,
