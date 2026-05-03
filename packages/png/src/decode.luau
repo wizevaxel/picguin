@@ -61,6 +61,8 @@ local function decode_error(code: DecodeErrorCode, message: string): DecodeError
 	return {code = code, message = message}
 end
 
+local SIGNATURE = "\x89PNG\x0D\x0A\x1A\x0A"
+
 local CRITICAL_CHUNK_MAP = map {
 	"IHDR", "IDAT", "PLTE", "IEND",
 } :: {[types.CriticalChunk]: true} & {[types.AncillaryChunk]: nil}
@@ -77,7 +79,6 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 	["IHDR"] = function(context, chunk_ranges)
 		local chunk_offset = chunk_ranges[1]
 		local chunk_length = chunk_ranges[2]
-
 		if chunk_length ~= 13 then
 			return decode_error("invalid_length", `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`)
 		end
@@ -92,7 +93,6 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 
 		local bit_depth = buffer.readu8(source, chunk_offset + 8)
 		local color_type = buffer.readu8(source, chunk_offset + 9)
-
 		local color_info = COLOR_TYPE_MAP[color_type]
 		if not color_info then
 			return decode_error("invalid_header", `invalid color type: {color_type}`)
@@ -132,7 +132,6 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 	end,
 	["PLTE"] = function(context, chunk_ranges)
 		local chunk_length = chunk_ranges[2]
-
 		if chunk_length == 0 or chunk_length > 768 or chunk_length % 3 ~= 0 then
 			return decode_error("invalid_length", `invalid PLTE chunk length: expected 3-768 bytes in multiples of 3, got {chunk_length}`)
 		end
@@ -144,18 +143,16 @@ local CHUNK_PARSER_MAP: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeE
 local function parse_png(context: DecodeContext): DecodeError?
 	local source = context.source
 	local length = context.length
-	local offset = 0
-
 	if length < 8 then
 		return decode_error("unexpected_eof", "EOF while reading signature")
 	end
 
-	local signature = buffer.readstring(source, offset, 8)
-	if signature ~= "\137PNG\r\n\26\n" then
+	local signature = buffer.readstring(source, 0, 8)
+	if signature ~= SIGNATURE then
 		return decode_error("invalid_signature", "invalid PNG signature")
 	end
 
-	offset += 8
+	local offset = 8
 
 	local crc_mode = context.crc
 	local use = context.use
