@@ -40,11 +40,11 @@ export type ReadOptions = {
 
 export type ReadResult = {
 	bitmap: buffer,
-	region: PixelRegion?,
+	region: BitmapRegion?,
 	duration: number?,
 }
 
-export type PixelRegion = {
+export type BitmapRegion = {
 	x: number,
 	y: number,
 	width: number,
