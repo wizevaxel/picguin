@@ -7,12 +7,9 @@ local types = require("@self/types")
 local decode = require("@self/decode")
 local encode = require("@self/encode")
 
-export type ColorFormat = core.ColorFormat
-export type AlphaFormat = core.AlphaFormat
 export type DecodeSource = core.DecodeSource
-export type ReadOptions = core.ReadOptions
-export type ReadResult = core.ReadResult
-export type PixelRegion = core.PixelRegion
+export type Frame = core.Frame
+export type BitmapRegion = core.BitmapRegion
 
 export type ColorSpace = types.ColorSpace
 export type CriticalChunk = types.CriticalChunk

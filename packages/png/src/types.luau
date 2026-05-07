@@ -1,8 +1,6 @@
 --!strict
 --!optimize 2
 
-local core = require("../roblox_packages/core")
-
 export type ColorSpace = "truecolor" | "grayscale" | "indexed"
 
 export type CriticalChunk =

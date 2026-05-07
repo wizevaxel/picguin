@@ -1,15 +1,6 @@
 --!strict
 --!optimize 2
 
-export type ColorFormat =
-	| "rgba8"
-	| "rgb8"
-
-export type AlphaFormat =
-	| "alpha"
-	| "black"
-	| "white"
-
 export type ErrorCode =
 	| "unsupported"
 	| "overflow"
@@ -28,17 +19,10 @@ export type Decoded<ReadErrorCode, Extension> = {
 	width: number,
 	height: number,
 
-	read: (ReadOptions) -> (ReadResult?, Error<ReadErrorCode>),
+	read: (number?) -> (Frame?, Error<ReadErrorCode>),
 } & Extension
 
-export type ReadOptions = {
-	format: ColorFormat?,
-	frame: number?,
-	composite: boolean?,
-	alpha: AlphaFormat?,
-}
-
-export type ReadResult = {
+export type Frame = {
 	bitmap: buffer,
 	region: BitmapRegion?,
 	duration: number?,
