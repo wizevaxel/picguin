@@ -24,11 +24,8 @@ export type ReadErrorCode =
 export type ReadError = types.Error<ReadErrorCode>
 
 export type Decoded = {
-	codec: string,
-
 	width: number,
 	height: number,
-
 	frames: number,
 	alpha: boolean,
 
@@ -524,8 +521,6 @@ return function(source: buffer | string, options: DecodeOptions?): (Decoded?, De
 
 		ranges = {},
 		decoded = {
-			codec = "png",
-
 			headers = {},
 		} :: Decoded,
 	}
