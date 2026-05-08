@@ -1,6 +1,11 @@
 --!strict
 --!optimize 2
 
+export type Error<Code> = {
+	code: Code,
+	message: string,
+}
+
 export type ColorSpace = "truecolor" | "grayscale" | "indexed"
 
 export type CriticalChunk =

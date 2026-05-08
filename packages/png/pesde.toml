@@ -1,13 +1,18 @@
 name = "picguin/png"
 version = "0.1.0"
+license = "MIT"
 authors = ["LiterallyWize"]
 repository = "https://github.com/LiterallyWize/picguin"
-license = "MIT"
 includes = ["src/**/*", "pesde.toml"]
 
 [target]
 environment = "roblox"
 lib = "src/init.luau"
+build_files = ["src"]
+
+[engines]
+pesde = "^0.7.0"
+lune = "^0.10.2"
 
 [indices]
 default = "https://github.com/pesde-pkg/index"
@@ -16,13 +21,6 @@ default = "https://github.com/pesde-pkg/index"
 roblox_sync_config_generator = ".pesde/scripts/roblox_sync_config_generator.luau"
 sourcemap_generator = ".pesde/scripts/sourcemap_generator.luau"
 
-[engines]
-pesde = "^0.7.0"
-lune = "^0.10.2"
-
 [dev_dependencies]
 scripts = { name = "pesde/scripts_rojo", version = "^0.2.0", target = "lune" }
 rojo = { name = "pesde/rojo", version = "^7.5.1", target = "lune" }
-
-[dependencies]
-core = { workspace = "picguin/core", version = "^"  }

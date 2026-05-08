@@ -2,12 +2,12 @@
 --!native
 --!optimize 2
 
-local core = require("../roblox_packages/core")
+local types = require("./types")
 
 export type DecompressErrorCode =
-	| core.ErrorCode
+	| "unsupported"
 	| "invalid_header"
-export type DecompressError = core.Error<DecompressErrorCode>
+export type DecompressError = types.Error<DecompressErrorCode>
 
 local function repetition(t: {number}): {number}
 	local out: {number} = {}

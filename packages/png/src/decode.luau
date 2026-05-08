@@ -2,32 +2,33 @@
 --!native
 --!optimize 2
 
-local core = require("../roblox_packages/core")
 local types = require("./types")
 local crc32 = require("./crc32")
 local zlib = require("./zlib")
 
 export type DecodeErrorCode =
-	| core.ErrorCode
+	| "unsupported"
+	| "overflow"
+	| "unexpected_eof"
 	| "invalid_signature"
 	| "invalid_crc"
 	| "invalid_length"
 	| "invalid_header"
 	| "unknown_chunk"
 	| "missing_chunk"
-export type DecodeError = core.Error<DecodeErrorCode>
+export type DecodeError = types.Error<DecodeErrorCode>
 
 export type ReadErrorCode =
-	| core.ErrorCode
 	| zlib.DecompressErrorCode
 	| "invalid_filter"
-export type ReadError = core.Error<ReadErrorCode>
+export type ReadError = types.Error<ReadErrorCode>
 
-export type DecodeOptions = {
-	crc: ("all" | "critical" | "none")?,
-}
+export type Decoded = {
+	codec: string,
 
-export type Decoded = core.Decoded<ReadErrorCode, {
+	width: number,
+	height: number,
+
 	frames: number,
 	alpha: boolean,
 
@@ -37,8 +38,27 @@ export type Decoded = core.Decoded<ReadErrorCode, {
 		bit_depth: number,
 		channels: number,
 	},
-	palette: {number}?
-}>
+	palette: {number}?,
+
+	read: (number?) -> (Frame?, ReadError),
+}
+
+export type Frame = {
+	bitmap: buffer,
+	region: BitmapRegion?,
+	duration: number?,
+}
+
+export type BitmapRegion = {
+	x: number,
+	y: number,
+	width: number,
+	height: number,
+}
+
+export type DecodeOptions = {
+	crc: ("all" | "critical" | "none")?,
+}
 
 type DecodeContext = {
 	source: buffer,
@@ -476,7 +496,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 		return decode_error("overflow", "predetermined decompressed image data size exceeds buffer limits")
 	end
 
-	decoded.read = function(frame: number?): (core.Frame?, ReadError)
+	decoded.read = function(frame: number?): (Frame?, ReadError)
 		local decompressed, err0 = zlib.decompress(concatenate_ranges(source, ranges["IDAT"]), out_size)
 		if not decompressed then return nil, err0 :: ReadError end
 		local unfiltered, err1 = unfilter(decoded, decompressed)
@@ -492,8 +512,8 @@ local function parse_png(context: DecodeContext): DecodeError?
 	return nil
 end
 
-return function(source: core.DecodeSource, options: DecodeOptions?): (Decoded?, DecodeError)
-	source = core.convert_source(source)
+return function(source: buffer | string, options: DecodeOptions?): (Decoded?, DecodeError)
+	source = type(source) == "buffer" and source or buffer.fromstring(source)
 	options = options or {} :: DecodeOptions
 
 	local context: DecodeContext = {
