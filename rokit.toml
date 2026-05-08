@@ -1,3 +1,4 @@
 [tools]
-lune = "lune-org/lune@0.10.4"
 luau-lsp = "JohnnyMorganz/luau-lsp@1.66.1"
+lune = "lune-org/lune@0.10.4"
+zune = "Scythe-Technology/zune@0.5.6"
