@@ -37,7 +37,7 @@ export type Decoded = {
 	},
 	palette: {number}?,
 
-	read: (number?) -> (Frame?, ReadError),
+	read: (frame: number?, bit_depth: number?) -> (Frame?, ReadError),
 }
 
 export type Frame = {
@@ -214,8 +214,8 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 	end,
 }
 
-local CONVERSION: {[types.ColorSpace]: (context: DecodeContext, data: buffer) -> buffer} = {
-	["truecolor"] = function(context, data)
+local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer} = {
+	["truecolor"] = function(context, data, bit_depth_target)
 		local length = buffer.len(data)
 		local decoded = context.decoded
 		local headers = decoded.headers
@@ -258,7 +258,7 @@ local CONVERSION: {[types.ColorSpace]: (context: DecodeContext, data: buffer) ->
 
 		return out
 	end,
-	["grayscale"] = function(context, data)
+	["grayscale"] = function(context, data, bit_depth_target)
 		local length = buffer.len(data)
 		local decoded = context.decoded
 		local headers = decoded.headers
@@ -304,7 +304,7 @@ local CONVERSION: {[types.ColorSpace]: (context: DecodeContext, data: buffer) ->
 
 		return out
 	end,
-	["indexed"] = function(context, data)
+	["indexed"] = function(context, data, bit_depth_target)
 		local length = buffer.len(data)
 		local decoded = context.decoded
 		local headers = decoded.headers
@@ -493,13 +493,16 @@ local function parse_png(context: DecodeContext): DecodeError?
 		return decode_error("overflow", "predetermined decompressed image data size exceeds buffer limits")
 	end
 
-	decoded.read = function(frame: number?): (Frame?, ReadError)
+	decoded.read = function(frame: number?, bit_depth: number?): (Frame?, ReadError)
+		frame = frame and frame // 1 or 0
+		bit_depth = bit_depth == 16 and 16 or 8
+
 		local decompressed, err0 = zlib.decompress(concatenate_ranges(source, ranges["IDAT"]), out_size)
 		if not decompressed then return nil, err0 :: ReadError end
 		local unfiltered, err1 = unfilter(decoded, decompressed)
 		if not unfiltered then return nil, err1 :: ReadError end
 
-		local bitmap = CONVERSION[decoded.headers.color_space](context, unfiltered)
+		local bitmap = CONVERSION[decoded.headers.color_space](context, unfiltered, bit_depth)
 
 		return {
 			bitmap = bitmap,
