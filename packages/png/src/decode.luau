@@ -23,6 +23,10 @@ export type ReadErrorCode =
 	| "invalid_filter"
 export type ReadError = types.Error<ReadErrorCode>
 
+export type ColorTarget =
+	| "rgba8"
+	| "rgba16"
+
 export type Decoded = {
 	width: number,
 	height: number,
@@ -31,13 +35,13 @@ export type Decoded = {
 
 	headers: {
 		interlacing: boolean,
-		color_space: types.ColorSpace,
-		bit_depth: number,
 		channels: number,
+		bit_depth: number,
+		color_space: types.ColorSpace,
 	},
 	palette: {number}?,
 
-	read: (frame: number?, bit_depth: number?) -> (Frame?, ReadError),
+	read: (frame: number?, target: ColorTarget?) -> (Frame?, ReadError),
 }
 
 export type Frame = {
@@ -214,39 +218,51 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 	end,
 }
 
-local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer} = {
-	["truecolor"] = function(context, data, bit_depth_target)
+local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
+	["truecolor"] = function(context, data)
 		local length = buffer.len(data)
 		local decoded = context.decoded
 		local headers = decoded.headers
 
-		local bit_depth = headers.bit_depth
 		local channels = headers.channels
+		local bit_depth = headers.bit_depth
 
 		local transparency: number?
 		if context.ranges["tRNS"] then
 			local source = context.source
 			local offset = context.ranges["tRNS"][1]
 
-			if bit_depth == 8 then
+			if bit_depth == 16 then
+				transparency = bit32.byteswap(buffer.readu16(source, offset) * 0x10000)
+					+ bit32.byteswap(buffer.readu16(source, offset + 2))
+					+ bit32.byteswap(buffer.readu16(source, offset + 4)) * 0x10000
+			else
 				transparency = buffer.readu8(source, offset)
 					+ buffer.readu8(source, offset + 2) * 0x100
 					+ buffer.readu8(source, offset + 4) * 0x10000
-			elseif bit_depth == 16 then
-				transparency = bit32.byteswap(buffer.readu16(source, offset)) // 0x10000
-					+ bit32.byteswap(buffer.readu16(source, offset + 2))
-					+ bit32.byteswap(buffer.readu16(source, offset + 4)) * 0x10000
 			end
 		end
 
-		local out = buffer.create(decoded.width * decoded.height * 4)
+		local out = buffer.create(decoded.width * decoded.height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
-			-- TODO
-		elseif bit_depth == 8 then
 			if channels == 4 then
 				buffer.copy(out, 0, data, 0, length)
-			elseif channels == 3 then
+			else
+				local cursor = 0
+				for offset = 0, length - 1, 6 do
+					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+						+ bit32.byteswap(buffer.readu16(data, offset + 2))
+						+ bit32.byteswap(buffer.readu16(data, offset + 4)) * 0x10000
+					buffer.writeu32(out, cursor, value % 0x100000000)
+					buffer.writeu32(out, cursor + 4, value // 0x100000000 + (value == transparency and 0 or 0xFFFF0000))
+					cursor += 8
+				end
+			end
+		else
+			if channels == 4 then
+				buffer.copy(out, 0, data, 0, length)
+			else
 				local cursor = 0
 				for offset = 0, length - 1, 3 do
 					local value = buffer.readu16(data, offset) + buffer.readu8(data, offset + 2) * 0x10000
@@ -258,13 +274,13 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 
 		return out
 	end,
-	["grayscale"] = function(context, data, bit_depth_target)
+	["grayscale"] = function(context, data)
 		local length = buffer.len(data)
 		local decoded = context.decoded
 		local headers = decoded.headers
 
-		local bit_depth = headers.bit_depth
 		local channels = headers.channels
+		local bit_depth = headers.bit_depth
 
 		local transparency = -1
 		if context.ranges["tRNS"] then
@@ -274,14 +290,30 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 			if bit_depth == 8 then
 				transparency = buffer.readu8(source, offset)
 			elseif bit_depth == 16 then
-				transparency = bit32.byteswap(buffer.readu16(source, offset))
+				transparency = bit32.byteswap(buffer.readu16(source, offset) * 0x10000)
 			end
 		end
 
-		local out = buffer.create(decoded.width * decoded.height * 4)
+		local out = buffer.create(decoded.width * decoded.height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
-			-- TODO
+			if channels == 2 then
+				local cursor = 0
+				for offset = 0, length - 1, 4 do
+					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					buffer.writeu32(out, cursor, value + value * 0x10000)
+					buffer.writeu32(out, cursor + 4, value + bit32.byteswap(buffer.readu16(data, offset + 2)))
+					cursor += 4
+				end
+			else
+				local cursor = 0
+				for offset = 0, length - 1, 2 do
+					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					buffer.writeu32(out, cursor, value + value * 0x10000)
+					buffer.writeu32(out, cursor + 4, value + (value == transparency and 0 or 0xFFFF0000))
+					cursor += 4
+				end
+			end
 		elseif bit_depth == 8 then
 			if channels == 2 then
 				local cursor = 0
@@ -290,7 +322,7 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + buffer.readu8(data, offset + 1) * 0x1000000)
 					cursor += 4
 				end
-			elseif channels == 1 then
+			else
 				local cursor = 0
 				for offset = 0, length - 1, 1 do
 					local value = buffer.readu8(data, offset)
@@ -299,12 +331,22 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 				end
 			end
 		else
-			-- TODO
+			local scale = 255 // (2 ^ bit_depth - 1)
+			local field = 8 - bit_depth
+			local cursor = 0
+			for offset = 0, length - 1, 1 do
+				local byte = buffer.readu8(data, offset)
+				for shift = field, 0, -bit_depth do
+					local value = bit32.extract(byte, shift, bit_depth) * scale
+					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + (value == transparency and 0 or 0xFF000000))
+					cursor += 4
+				end
+			end
 		end
 
 		return out
 	end,
-	["indexed"] = function(context, data, bit_depth_target)
+	["indexed"] = function(context, data)
 		local length = buffer.len(data)
 		local decoded = context.decoded
 		local headers = decoded.headers
@@ -330,6 +372,46 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 					cursor += 4
 				end
 			end
+		end
+
+		return out
+	end,
+}
+
+local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
+	["rgba8"] = function(context, data)
+		local decoded = context.decoded
+		if decoded.headers.bit_depth < 16 then return data end
+
+		local out = buffer.create(decoded.width * decoded.height * 4)
+
+		local cursor = 0
+		for offset = 0, buffer.len(data) - 1, 8 do
+			local r = buffer.readu16(data, offset) // 0x101
+			local g = buffer.readu16(data, offset + 2) // 0x101
+			local b = buffer.readu16(data, offset + 4) // 0x101
+			local a = buffer.readu16(data, offset + 6) // 0x101
+			buffer.writeu32(out, cursor, r + g * 0x100 + b * 0x10000 + a * 0x1000000)
+			cursor += 4
+		end
+
+		return out
+	end,
+	["rgba16"] = function(context, data)
+		local decoded = context.decoded
+		if decoded.headers.bit_depth == 16 then return data end
+
+		local out = buffer.create(decoded.width * decoded.height * 2 * 4)
+
+		local cursor = 0
+		for offset = 0, buffer.len(data) - 1, 4 do
+			local r = buffer.readu8(data, offset) * 0x101
+			local g = buffer.readu8(data, offset + 1) * 0x101
+			local b = buffer.readu8(data, offset + 2) * 0x101
+			local a = buffer.readu8(data, offset + 3) * 0x101
+			buffer.writeu32(out, cursor, r + g * 0x10000)
+			buffer.writeu32(out, cursor + 4, b + a * 0x10000)
+			cursor += 8
 		end
 
 		return out
@@ -411,9 +493,9 @@ local function concatenate_ranges(source: buffer, ranges: SourceRanges): buffer
 
 	local out = buffer.create(out_size)
 	local cursor = 0
-	for i = 1, #ranges, 2 do
-		local size = ranges[i + 1]
-		buffer.copy(out, cursor, source, ranges[i], size)
+	for index = 1, #ranges, 2 do
+		local size = ranges[index + 1]
+		buffer.copy(out, cursor, source, ranges[index], size)
 		cursor += size
 	end
 
@@ -493,16 +575,17 @@ local function parse_png(context: DecodeContext): DecodeError?
 		return decode_error("overflow", "predetermined decompressed image data size exceeds buffer limits")
 	end
 
-	decoded.read = function(frame: number?, bit_depth: number?): (Frame?, ReadError)
+	decoded.read = function(frame: number?, target: ColorTarget?): (Frame?, ReadError)
 		frame = frame and frame // 1 or 0
-		bit_depth = bit_depth == 16 and 16 or 8
+		target = target or "rgba8" :: ColorTarget
 
 		local decompressed, err0 = zlib.decompress(concatenate_ranges(source, ranges["IDAT"]), out_size)
 		if not decompressed then return nil, err0 :: ReadError end
 		local unfiltered, err1 = unfilter(decoded, decompressed)
 		if not unfiltered then return nil, err1 :: ReadError end
 
-		local bitmap = CONVERSION[decoded.headers.color_space](context, unfiltered, bit_depth)
+		local converted = CONVERT_COLOR[decoded.headers.color_space](context, unfiltered)
+		local bitmap = CONVERT_TARGET[target](context, converted)
 
 		return {
 			bitmap = bitmap,
