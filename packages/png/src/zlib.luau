@@ -45,8 +45,8 @@ local LEN_ORDER = {
 	16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
 }
 
-local BYTESWAP = table.create(255, 0)
-for byte = 0, 255 do
+local BYTESWAP = table.create(0xFF, 0)
+for byte = 0, 0xFF do
 	local swap = 0
 	local bit = byte
 
@@ -86,9 +86,9 @@ local function huffman_tree(lengths: {number}): ({number}, number)
 
 			local swap = if length <= 8
 				then bit32.rshift(BYTESWAP[code], 8 - length)
-				else bit32.rshift(BYTESWAP[code // 256], 16 - length) + bit32.lshift(BYTESWAP[code % 256], length - 8)
+				else bit32.rshift(BYTESWAP[code // 0x100], 16 - length) + bit32.lshift(BYTESWAP[code % 0x100], length - 8)
 
-			local entry = (symbol - 1) * 16 + length
+			local entry = (symbol - 1) * 0x10 + length
 			local step = 2 ^ length
 
 			local index = swap
@@ -111,17 +111,17 @@ local function inflate_blocks(source: buffer, out_size: number): buffer
 	local function read_tree(tree: {number}, bits: number): number
 		local path = buffer.readbits(source, offset, bits)
 		local entry = tree[path] or 0
-		local length = entry % 16
+		local length = entry % 0x10
 		offset += length
-		return (entry - length) / 16
+		return (entry - length) / 0x10
 	end
 
 	local function decode_trees(): ({number}, number, {number}, number)
 		local hread = buffer.readbits(source, offset, 14)
 		offset += 14
-		local hlit = (hread % 32) + 257
+		local hlit = (hread % 0x20) + 257
 		local hdist = bit32.extract(hread, 5, 5) + 1
-		local hclen = (hread // 1024) + 4
+		local hclen = (hread // 0x400) + 4
 
 		local code_lengths = table.create(19, 0)
 		for i = 1, hclen do
@@ -230,7 +230,7 @@ end
 local function decompress(source: buffer, out_size: number): (buffer?, DecompressError)
 	local cmf = buffer.readu8(source, 0)
 
-	local cm = cmf % 16
+	local cm = cmf % 0x10
 	if cm ~= 8 then
 		return nil, decompress_error("unsupported", `unsupported zlib compression method: {cm}`)
 	end
@@ -242,7 +242,7 @@ local function decompress(source: buffer, out_size: number): (buffer?, Decompres
 	end
 
 	local flg = buffer.readu8(source, 1)
-	if (cmf * 256 + flg) % 31 ~= 0 then
+	if (cmf * 0x100 + flg) % 0x1F ~= 0 then
 		return nil, decompress_error("invalid_header", "invalid zlib header checksum")
 	end
 

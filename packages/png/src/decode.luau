@@ -171,12 +171,12 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 
 		local source = context.source
 
-		local palette = table.create(chunk_length // 3, 4278190080)
+		local palette = table.create(chunk_length // 3, 0xFF000000)
 		context.decoded.palette = palette
 
 		for index = 0, chunk_length // 3 - 1 do
 			local offset = chunk_offset + index * 3
-			palette[index + 1] += buffer.readu16(source, offset) + buffer.readu8(source, offset + 2) * 65536
+			palette[index + 1] += buffer.readu16(source, offset) + buffer.readu8(source, offset + 2) * 0x10000
 		end
 
 		return nil
@@ -195,7 +195,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 			local count = math.min(chunk_length, #palette)
 			local offset = chunk_offset - 1
 			for index = 1, count do
-				palette[index] = palette[index] % 16777216 + buffer.readu8(source, offset + index) * 16777216
+				palette[index] = palette[index] % 0x1000000 + buffer.readu8(source, offset + index) * 0x1000000
 			end
 		end
 
@@ -230,12 +230,12 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 
 			if bit_depth == 8 then
 				transparency = buffer.readu8(source, offset)
-					+ buffer.readu8(source, offset + 2) * 256
-					+ buffer.readu8(source, offset + 4) * 65536
+					+ buffer.readu8(source, offset + 2) * 0x100
+					+ buffer.readu8(source, offset + 4) * 0x10000
 			elseif bit_depth == 16 then
-				transparency = bit32.byteswap(buffer.readu16(source, offset))
-					+ bit32.byteswap(buffer.readu16(source, offset + 2)) * 65536
-					+ bit32.byteswap(buffer.readu16(source, offset + 4)) * 4294967296
+				transparency = bit32.byteswap(buffer.readu16(source, offset)) // 0x10000
+					+ bit32.byteswap(buffer.readu16(source, offset + 2))
+					+ bit32.byteswap(buffer.readu16(source, offset + 4)) * 0x10000
 			end
 		end
 
@@ -249,8 +249,8 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 			elseif channels == 3 then
 				local cursor = 0
 				for offset = 0, length - 1, 3 do
-					local value = buffer.readu16(data, offset) + buffer.readu8(data, offset + 2) * 65536
-					buffer.writeu32(out, cursor, value == transparency and value or value + 4278190080)
+					local value = buffer.readu16(data, offset) + buffer.readu8(data, offset + 2) * 0x10000
+					buffer.writeu32(out, cursor, value + (value == transparency and 0 or 0xFF000000))
 					cursor += 4
 				end
 			end
@@ -287,14 +287,14 @@ local CONVERSION: {[types.ColorSpace]: (DecodeContext, buffer, number) -> buffer
 				local cursor = 0
 				for offset = 0, length - 1, 2 do
 					local value = buffer.readu8(data, offset)
-					buffer.writeu32(out, cursor, value + value * 256 + value * 65536 + buffer.readu8(data, offset + 1) * 16777216)
+					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + buffer.readu8(data, offset + 1) * 0x1000000)
 					cursor += 4
 				end
 			elseif channels == 1 then
 				local cursor = 0
 				for offset = 0, length - 1, 1 do
 					local value = buffer.readu8(data, offset)
-					buffer.writeu32(out, cursor, value + value * 256 + value * 65536 + (value == transparency and 0 or 4278190080))
+					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + (value == transparency and 0 or 0xFF000000))
 					cursor += 4
 				end
 			end
@@ -359,7 +359,7 @@ local function unfilter(decoded: Decoded, data: buffer): (buffer?, ReadError)
 			for x = 1, row_width do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
 				local value = buffer.readu8(data, offset) + a
-				buffer.writeu8(out, cursor, value % 256)
+				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
@@ -367,7 +367,7 @@ local function unfilter(decoded: Decoded, data: buffer): (buffer?, ReadError)
 			for _ = 1, row_width do
 				local b = buffer.readu8(out, cursor - row_width)
 				local value = buffer.readu8(data, offset) + b
-				buffer.writeu8(out, cursor, value % 256)
+				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
@@ -376,7 +376,7 @@ local function unfilter(decoded: Decoded, data: buffer): (buffer?, ReadError)
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
 				local b = y > 1 and buffer.readu8(out, cursor - row_width) or 0
 				local value = buffer.readu8(data, offset) + (a + b) // 2
-				buffer.writeu8(out, cursor, value % 256)
+				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
@@ -391,7 +391,7 @@ local function unfilter(decoded: Decoded, data: buffer): (buffer?, ReadError)
 				local pc = math.abs(p - c)
 				local paeth = (pa <= pb and pa <= pc and a) or (pb <= pc and b) or c
 				local value = buffer.readu8(data, offset) + paeth
-				buffer.writeu8(out, cursor, value % 256)
+				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
