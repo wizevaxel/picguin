@@ -3,7 +3,6 @@
 --!optimize 2
 
 local LOOKUP = table.create(0xFF, 0)
-
 for i = 0, 0xFF do
 	local crc = i
 	for _ = 1, 8 do

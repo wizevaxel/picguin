@@ -9,19 +9,6 @@ export type DecompressErrorCode =
 	| "invalid_header"
 export type DecompressError = types.Error<DecompressErrorCode>
 
-local function repetition(t: {number}): {number}
-	local out: {number} = {}
-
-	for i = 1, #t, 2 do
-		local value = t[i]
-		for _ = 1, t[i + 1] do
-			table.insert(out, value)
-		end
-	end
-
-	return out
-end
-
 local function decompress_error(code: DecompressErrorCode, message: string): DecompressError
 	return {code = code, message = message}
 end
@@ -45,17 +32,26 @@ local LEN_ORDER = {
 	16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
 }
 
-local BYTESWAP = table.create(0xFF, 0)
-for byte = 0, 0xFF do
-	local swap = 0
-	local bit = byte
+local BITSWAP = table.create(0xFF, 0)
+for index = 0, 0xFF do
+	local value = index
+	value = bit32.band(value, 0xAA) // 0b00010 + bit32.band(value, 0x55) * 0b00010
+	value = bit32.band(value, 0xCC) // 0b00100 + bit32.band(value, 0x33) * 0b00100
+	value = bit32.band(value, 0xF0) // 0b10000 + bit32.band(value, 0x0F) * 0b10000
+	BITSWAP[index] = value
+end
 
-	for _ = 1, 8 do
-		swap = (swap * 2) + (bit % 2)
-		bit //= 2
+local function unroll(runs: {number}): {number}
+	local out: {number} = {}
+
+	for index = 1, #runs, 2 do
+		local value = runs[index]
+		for _ = 1, runs[index + 1] do
+			table.insert(out, value)
+		end
 	end
 
-	BYTESWAP[byte] = swap
+	return out
 end
 
 local function huffman_tree(lengths: {number}): ({number}, number)
@@ -84,14 +80,10 @@ local function huffman_tree(lengths: {number}): ({number}, number)
 			code = next_code[length]
 			next_code[length] += 1
 
-			local swap = if length <= 8
-				then bit32.rshift(BYTESWAP[code], 8 - length)
-				else bit32.rshift(BYTESWAP[code // 0x100], 16 - length) + bit32.lshift(BYTESWAP[code % 0x100], length - 8)
-
 			local entry = (symbol - 1) * 0x10 + length
 			local step = 2 ^ length
 
-			local index = swap
+			local index = bit32.rshift(length > 8 and BITSWAP[code] or BITSWAP[code % 0x100] * 0x100 + BITSWAP[code // 0x100], 16 - length)
 			while index < size do
 				tree[index] = entry
 				index += step
@@ -102,18 +94,18 @@ local function huffman_tree(lengths: {number}): ({number}, number)
 	return tree, max_bits
 end
 
-local FIXED_LIT_TREE, FIXED_LIT_BITS = huffman_tree(repetition {8, 144, 9, 112, 7, 24, 8, 8})
-local FIXED_DIST_TREE, FIXED_DIST_BITS = huffman_tree(repetition {5, 32})
+local FIXED_LIT_TREE, FIXED_LIT_BITS = huffman_tree(unroll({8, 144, 9, 112, 7, 24, 8, 8}))
+local FIXED_DIST_TREE, FIXED_DIST_BITS = huffman_tree(unroll({5, 32}))
 
 local function inflate_blocks(source: buffer, out_size: number): buffer
 	local offset = 16
 
 	local function read_tree(tree: {number}, bits: number): number
 		local path = buffer.readbits(source, offset, bits)
-		local entry = tree[path] or 0
+		local entry = tree[path]
 		local length = entry % 0x10
 		offset += length
-		return (entry - length) / 0x10
+		return (entry - length) // 0x10
 	end
 
 	local function decode_trees(): ({number}, number, {number}, number)
@@ -124,8 +116,8 @@ local function inflate_blocks(source: buffer, out_size: number): buffer
 		local hclen = (hread // 0x400) + 4
 
 		local code_lengths = table.create(19, 0)
-		for i = 1, hclen do
-			code_lengths[LEN_ORDER[i] + 1] = buffer.readbits(source, offset, 3)
+		for index = 1, hclen do
+			code_lengths[LEN_ORDER[index] + 1] = buffer.readbits(source, offset, 3)
 			offset += 3
 		end
 
@@ -134,8 +126,8 @@ local function inflate_blocks(source: buffer, out_size: number): buffer
 		local code_count = hlit + hdist
 		local symbol_lengths = table.create(code_count, 0)
 
-		local i = 1
-		while i <= code_count do
+		local index = 1
+		while index <= code_count do
 			local repeats = 1
 			local value = 0
 
@@ -145,7 +137,7 @@ local function inflate_blocks(source: buffer, out_size: number): buffer
 			elseif symbol == 16 then
 				repeats = buffer.readbits(source, offset, 2) + 3
 				offset += 2
-				value = symbol_lengths[i - 1]
+				value = symbol_lengths[index - 1]
 			elseif symbol == 17 then
 				repeats = buffer.readbits(source, offset, 3) + 3
 				offset += 3
@@ -155,8 +147,8 @@ local function inflate_blocks(source: buffer, out_size: number): buffer
 			end
 
 			for _ = 1, repeats do
-				symbol_lengths[i] = value
-				i += 1
+				symbol_lengths[index] = value
+				index += 1
 			end
 		end
 
