@@ -1,8 +1,8 @@
 name = "picguin/png"
 version = "0.1.0"
 license = "MIT"
-authors = ["LiterallyWize"]
-repository = "https://github.com/LiterallyWize/picguin"
+authors = ["wizeväxel"]
+repository = "https://github.com/wizevaxel/picguin"
 includes = ["src/**/*", "pesde.toml"]
 
 [target]

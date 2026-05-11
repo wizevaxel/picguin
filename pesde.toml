@@ -1,9 +1,9 @@
-name = "literallywize/picguin"
+name = "wizevaxel/picguin"
 version = "0.0.0"
 private = true
 license = "MIT"
-authors = ["LiterallyWize"]
-repository = "https://github.com/LiterallyWize/picguin"
+authors = ["wizeväxel"]
+repository = "https://github.com/wizevaxel/picguin"
 
 workspace_members = ["packages/*"]
 
