@@ -1,0 +1,5 @@
+@font-face {
+	font-family: "Cal Sans";
+	src: url("/picguin/fonts/cal-sans.woff2") format("woff2");
+	font-display: fallback;
+}

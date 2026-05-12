@@ -1,0 +1,65 @@
+.home .VPContent {
+	align-content: center;
+}
+
+.home .VPHero {
+	margin: 0;
+}
+
+.home .VPHero .name {
+	font-family: "Cal Sans";
+	font-size: 4.4em;
+}
+
+.home .VPHero .text {
+	line-height: 1.8em;
+	font-size: 1.8em;
+	font-weight: 550;
+	color: var(--vp-c-text-3);
+}
+
+.home .VPHero .tagline {
+	color: var(--vp-c-text-2);
+}
+
+@media (min-width: 960px) {
+	.home .VPHero .container {
+		justify-self: center;
+		width: 890px;
+		display: flex;
+		align-items: center;
+	}
+
+	.home .VPHero .main,
+	.home .VPHero .image {
+		flex: 1 1 0;
+		min-width: 0;
+		max-width: 640px;
+	}
+
+	.home .VPHero .main {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		order: 2;
+	}
+
+	.home .VPHero .image {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+		order: 1;
+	}
+
+	.home .VPHero .image-container {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-end;
+	}
+
+	.home .VPHero .image-src,
+	.home .VPHero .image-bg {
+		left: 60%;
+		margin-left: auto;
+	}
+}
