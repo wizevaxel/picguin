@@ -1,10 +1,13 @@
 {
-	"devDependencies": {
-		"vitepress": "^1.6.4"
-	},
 	"scripts": {
 		"docs:dev": "vitepress dev",
 		"docs:build": "vitepress build",
 		"docs:preview": "vitepress preview"
+	},
+	"devDependencies": {
+		"vitepress": "^1.6.4"
+	},
+	"dependencies": {
+		"@catppuccin/vitepress": "^0.1.2"
 	}
 }

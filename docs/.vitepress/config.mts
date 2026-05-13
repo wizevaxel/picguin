@@ -20,10 +20,18 @@ export default defineConfig({
 			],
 		},
 
-		socialLinks: [{ icon: "github", link: "https://github.com/wizevaxel/picguin" }],
+		socialLinks: [
+			{ icon: "github", link: "https://github.com/wizevaxel/picguin" },
+		],
 		footer: {
 			message: "Released under the MIT License.",
 			copyright: "Copyright © 2026 wizeväxel",
+		},
+	},
+	markdown: {
+		theme: {
+			light: "catppuccin-latte",
+			dark: "catppuccin-mocha",
 		},
 	},
 })

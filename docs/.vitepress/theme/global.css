@@ -2,3 +2,18 @@
 	font-family: "Cal Sans";
 	font-size: 1.2em;
 }
+
+.VPNavBarTitle span {
+	background-image: var(--picguin-gradient);
+	background-clip: text;
+	color: var(--vp-c-text-1);
+	transition: color 0.25s;
+}
+
+.VPNavBarTitle:active span {
+	color: transparent;
+}
+
+.VPNavBarTitle:hover span {
+	color: transparent;
+}

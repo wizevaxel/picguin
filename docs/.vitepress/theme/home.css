@@ -6,14 +6,17 @@
 	margin: 0;
 
 	& .name {
+		padding: 0 0 0.2em;
 		font-family: "Cal Sans";
 		font-size: 4.4em;
 	}
 
 	& .text {
+		transform: translate(0, -0.4em);
 		font-size: 1.8em;
-		line-height: 1.8em;
-		color: var(--vp-c-text-3);
+		line-height: 1.6em;
+		opacity: 0.5;
+		color: var(--vp-c-brand-3);
 	}
 
 	@media (min-width: 960px) {
@@ -50,8 +53,8 @@
 		}
 
 		& .tagline {
-			font-size: 1.5em;
 			max-width: 100%;
+			font-size: 1.5em;
 		}
 
 		& .image {
