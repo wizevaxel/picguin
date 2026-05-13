@@ -4,65 +4,86 @@
 
 .home .VPHero {
 	margin: 0;
-}
 
-.home .VPHero .name {
-	font-family: "Cal Sans";
-	font-size: 4.4em;
-}
-
-.home .VPHero .text {
-	line-height: 1.8em;
-	font-size: 1.8em;
-	font-weight: 550;
-	color: var(--vp-c-text-3);
-}
-
-.home .VPHero .tagline {
-	color: var(--vp-c-text-2);
-}
-
-:root:not(.dark) .home .VPHero .image-src {
-	filter: drop-shadow(20px 8px 20px hsla(260, 100%, 95%));
-}
-
-@media (min-width: 960px) {
-	.home .VPHero .container {
-		justify-self: center;
-		width: 890px;
-		display: flex;
-		align-items: center;
+	& .name {
+		font-family: "Cal Sans";
+		font-size: 4.4em;
 	}
 
-	.home .VPHero .main,
-	.home .VPHero .image {
-		flex: 1 1 0;
-		min-width: 0;
-		max-width: 640px;
+	& .text {
+		font-size: 1.8em;
+		line-height: 1.8em;
+		color: var(--vp-c-text-3);
 	}
 
-	.home .VPHero .main {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		order: 2;
+	@media (min-width: 960px) {
+		padding: 144px 0 0;
+
+		& .container {
+			width: 880px;
+		}
+
+		& .main,
+		& .image {
+			flex: 1 1 0;
+			max-width: 50%;
+		}
+
+		& .main {
+			order: 2;
+		}
+
+		& .image {
+			order: 1;
+		}
 	}
 
-	.home .VPHero .image {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-		order: 1;
+	@media (max-width: 959px) {
+		padding: 0;
+
+		& .container {
+			align-items: center;
+		}
+
+		& .text {
+			line-height: 2.2em;
+		}
+
+		& .tagline {
+			font-size: 1.5em;
+			max-width: 100%;
+		}
+
+		& .image {
+			margin: 16px;
+		}
+
+		& .image-src {
+			max-width: 320px;
+			max-height: 320px;
+		}
 	}
 
-	.home .VPHero .image-container {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-end;
-	}
+	@media (max-width: 639px) {
+		& .name {
+			font-size: 3em;
+		}
 
-	.home .VPHero .image-src,
-	.home .VPHero .image-bg {
-		margin-left: auto;
+		& .text {
+			font-size: 1.3em;
+		}
+
+		& .tagline {
+			font-size: 1.2em;
+		}
+
+		& .image-container {
+			height: 280px;
+		}
+
+		& .image-src {
+			max-width: 220px;
+			max-height: 220px;
+		}
 	}
 }
