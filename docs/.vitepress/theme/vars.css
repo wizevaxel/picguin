@@ -14,6 +14,8 @@
 
 	--vp-home-hero-name-color: transparent;
 	--vp-home-hero-name-background: var(--picguin-gradient);
+
+	--vp-button-alt-bg: var(--vp-c-bg-alt);
 }
 
 .dark {
