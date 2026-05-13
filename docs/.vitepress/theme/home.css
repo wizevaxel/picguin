@@ -22,6 +22,10 @@
 	color: var(--vp-c-text-2);
 }
 
+:root:not(.dark) .home .VPHero .image-src {
+	filter: drop-shadow(20px 8px 20px hsla(260, 100%, 95%));
+}
+
 @media (min-width: 960px) {
 	.home .VPHero .container {
 		justify-self: center;
@@ -59,7 +63,6 @@
 
 	.home .VPHero .image-src,
 	.home .VPHero .image-bg {
-		left: 60%;
 		margin-left: auto;
 	}
 }
