@@ -4,19 +4,32 @@ export default defineConfig({
 	title: "Picguin",
 	description: "High-performance Luau image codecs",
 	base: "/picguin/",
-	themeConfig: {
-		logo: "logo.svg",
-		nav: [
-			{ text: "Introduction", link: "/guide/get-started" },
-			{ text: "Formats", link: "/formats/png" },
-		],
+	cleanUrls: true,
 
+	rewrites: {
+		"en/:rest*": ":rest*",
+	},
+
+	themeConfig: {
+		logo: "/logo.svg",
+
+		nav: [
+			{ text: "Introduction", link: "/getting-started" },
+			{ text: "Formats", link: "/formats/" },
+			{ text: "Benchmarks", link: "/benchmarks" },
+		],
 		sidebar: {
-			"/guide/": [
-				{ text: "Get Started", link: "/guide/get-started" }
-			],
 			"/formats/": [
-				{ text: "PNG", link: "/formats/png" }
+				{ text: "Formats: Overview", link: "/formats/" },
+				{
+					text: "PNG",
+					items: [
+						{ text: "Overview", link: "/formats/png/" },
+						{ text: "Decode", link: "/formats/png/decode" },
+						{ text: "Encode", link: "/formats/png/encode" },
+						{ text: "Types", link: "/formats/png/types" },
+					],
+				},
 			],
 		},
 
@@ -28,6 +41,7 @@ export default defineConfig({
 			copyright: "Copyright © 2026 wizeväxel",
 		},
 	},
+
 	markdown: {
 		theme: {
 			light: "catppuccin-latte",

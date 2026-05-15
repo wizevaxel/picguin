@@ -1,5 +1,11 @@
+.home .VPNavBar > .divider {
+	opacity: 0;
+}
+
 .home .VPContent {
-	align-content: center;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
 }
 
 .home .VPHero {
@@ -20,8 +26,6 @@
 	}
 
 	@media (min-width: 960px) {
-		padding: 144px 0 0;
-
 		& .container {
 			width: 880px;
 		}

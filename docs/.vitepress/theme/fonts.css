@@ -1,5 +1,11 @@
 @font-face {
 	font-family: "Cal Sans";
-	src: url("/picguin/fonts/cal-sans.woff2") format("woff2");
 	font-display: fallback;
+	src: url("/picguin/fonts/CalSans/CalSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+	font-family: "Red Hat Mono";
+	font-display: fallback;
+	src: url("/picguin/fonts/RedHatMono/RedHatMono-Medium.woff2") format("woff2");
 }
