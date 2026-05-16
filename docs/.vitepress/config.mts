@@ -14,22 +14,24 @@ export default defineConfig({
 		logo: "/logo.svg",
 
 		nav: [
-			{ text: "Introduction", link: "/getting-started" },
-			{ text: "Formats", link: "/formats/" },
-			{ text: "Benchmarks", link: "/benchmarks" },
+			{ text: "Guide", link: "/guide/introduction" },
+			{ text: "Benchmarks", link: "/benchmarks/png" },
 		],
 		sidebar: {
-			"/formats/": [
-				{ text: "Formats: Overview", link: "/formats/" },
+			"/guide/": [
+				{ text: "Introduction", link: "/guide/introduction" },
 				{
 					text: "PNG",
 					items: [
-						{ text: "Overview", link: "/formats/png/" },
-						{ text: "Decode", link: "/formats/png/decode" },
-						{ text: "Encode", link: "/formats/png/encode" },
-						{ text: "Types", link: "/formats/png/types" },
+						{ text: "Overview", link: "/guide/png/" },
+						{ text: "Decode", link: "/guide/png/decode" },
+						{ text: "Encode", link: "/guide/png/encode" },
+						{ text: "Types", link: "/guide/png/types" },
 					],
 				},
+			],
+			"/benchmarks/": [
+				{ text: "PNG", link: "/benchmarks/png" }
 			],
 		},
 

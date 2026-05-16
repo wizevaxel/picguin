@@ -1,7 +1,5 @@
 ---
-next:
-  text: "Formats"
-  link: "./formats/"
+next: false
 ---
 
 Picguin is a pure-Luau, strictly-typed collection of high-performance image codecs,
@@ -13,7 +11,7 @@ providing straightforward decoders & encoders for an increasing range of formats
 
 ---
 
-### Example decoding using Picguin's [PNG](./formats/png/) library:
+### Example decoding using Picguin's [PNG](./png/) library:
 
 ```bash
 # package installation

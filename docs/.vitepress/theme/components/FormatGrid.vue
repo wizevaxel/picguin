@@ -12,7 +12,7 @@ type Format = {
 	support: keyof typeof labels
 }
 
-const href = (format: Format) => withBase(`/formats/${format.name}`)
+const href = (format: Format) => withBase(`/guide/${format.name}`)
 
 const formats: Format[] = [
 	{ name: "png", support: "decode" },

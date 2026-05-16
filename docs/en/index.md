@@ -11,7 +11,7 @@ hero:
   actions:
     - theme: brand
       text: Get Started
-      link: ./getting-started
+      link: ./guide/introduction
     - theme: alt
       text: Benchmarks
       link: ./benchmarks
