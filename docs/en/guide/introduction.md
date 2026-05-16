@@ -27,14 +27,14 @@ local image, err = png.decode(source, {
 	crc = "none" -- disable crc checks, improving parsing performance
 })
 if image == nil then
-	warn(`error ({err.code}): {err.message}`)
+	error(`error ({err.code}): {err.message}`)
 end
 
 -- `image` provides image info and a read method
--- image.read(frame: number?, format: png.ColorFormat?) -> png.Frame
+-- image.read(frame: number?, target: png.ColorTarget?) -> png.Frame
 local frame, err = image.read(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
 if frame == nil then
-	warn(`error ({err.code}): {err.message}`)
+	error(`error ({err.code}): {err.message}`)
 end
 
 content:write(frame.bitmap, frame.region.size, frame.region.position)
