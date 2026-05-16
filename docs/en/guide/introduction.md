@@ -2,16 +2,17 @@
 next: false
 ---
 
-Picguin is a pure-Luau, strictly-typed collection of high-performance image codecs,
-providing straightforward decoders & encoders for an increasing range of formats.
+Picguin is a pure-Luau, strictly typed collection of high-performance image codecs,
+providing straightforward decoders & encoders for a growing range of formats.
 
 - Each codec is published as a [pesde](https://pesde.dev) package under the `picguin/` namespace.
 - All codecs export `decode(source, options)` and `encode(pixels, options)` functions.  
-  (some codecs may not support encoding, in which case `encode()` is a no-op)
+  For codecs without encoding support, `encode()` returns an `"unsupported"` error.
 
 ---
 
-### Example decoding using Picguin's [PNG](./png/) library:
+### Example Usage
+Here, we use Picguin's [PNG](./png/) library to decode an image.
 
 ```bash
 # package installation
