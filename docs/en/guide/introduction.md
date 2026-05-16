@@ -1,3 +1,5 @@
+# Introduction
+
 Picguin is a pure-Luau, strictly typed collection of high-performance image codecs,
 providing straightforward decoders & encoders for a growing range of formats.
 
@@ -5,9 +7,7 @@ providing straightforward decoders & encoders for a growing range of formats.
 - All codecs export `decode(source, options)` and `encode(pixels, options)` functions.  
   For codecs without encoding support, `encode()` returns an `"unsupported"` error.
 
----
-
-### Example Usage
+## Example Usage
 Here, we use Picguin's [PNG](./png/) library to decode an image.
 
 ```bash
@@ -39,11 +39,6 @@ end
 
 content:write(frame.bitmap, frame.region.size, frame.region.position)
 ```
-
-#### Error Handling
-
-- All exported functions return `(result?, error)`.
-- If a fatal error is encountered, `result = nil`. Otherwise, `error.code = "ok"`.
 
 ::: warning
 Picguin is in early development, and the public API across codecs is subject to change.  
