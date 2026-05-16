@@ -242,7 +242,7 @@ local function decompress(source: buffer, out_size: number): (buffer?, Decompres
 		return nil, decompress_error("invalid_header", "zlib preset dictionary is not allowed")
 	end
 
-	return inflate_blocks(source, out_size), nil :: any
+	return inflate_blocks(source, out_size), {code = "ok", message = ""}
 end
 
 local function compress()

@@ -2,6 +2,9 @@
 --!optimize 2
 
 export type Error<Code> = {
+	code: "ok",
+	message: "",
+} | {
 	code: Code,
 	message: string,
 }
