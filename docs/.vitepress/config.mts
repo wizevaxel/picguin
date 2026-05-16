@@ -20,6 +20,7 @@ export default defineConfig({
 		sidebar: {
 			"/guide/": [
 				{ text: "Introduction", link: "/guide/introduction" },
+				{ text: "Shared Types", link: "/guide/shared" },
 				{
 					text: "PNG",
 					items: [

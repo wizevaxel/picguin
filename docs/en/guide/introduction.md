@@ -1,7 +1,3 @@
----
-next: false
----
-
 Picguin is a pure-Luau, strictly typed collection of high-performance image codecs,
 providing straightforward decoders & encoders for a growing range of formats.
 
