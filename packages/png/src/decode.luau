@@ -27,7 +27,7 @@ export type ColorTarget =
 	| "rgba8"
 	| "rgba16"
 
-export type Image = {
+export type Parsed = {
 	width: number,
 	height: number,
 	frames: number,
@@ -41,10 +41,10 @@ export type Image = {
 	},
 	palette: {number}?,
 
-	read: (frame: number?, target: ColorTarget?) -> (Frame?, ReadError),
+	read: (frame: number?, target: ColorTarget?) -> (Cel?, ReadError),
 }
 
-export type Frame = {
+export type Cel = {
 	bitmap: buffer,
 	region: BitmapRegion,
 	duration: number,
@@ -65,11 +65,11 @@ type DecodeContext = {
 
 	crc: ("all" | "critical" | "none"),
 
-	ranges: {[types.Chunk]: SourceRanges},
-	image: Image,
+	ranges: {[types.Chunk]: SourceSpans},
+	parsed: Parsed,
 }
 
-type SourceRanges = {number}
+type SourceSpans = {number}
 
 local function map<T>(t: {T}): {[T]: true}
 	local out: {[T]: true} = {}
@@ -104,7 +104,7 @@ local COLOR_TYPE_MAP: {[number]: {color_space: types.ColorSpace, channels: numbe
 	[6] = {color_space = "truecolor", channels = 4, bit_depths = map {8, 16}},
 }
 
-local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError?} = {
+local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?} = {
 	["IHDR"] = function(context, chunk_ranges)
 		local chunk_offset = chunk_ranges[1]
 		local chunk_length = chunk_ranges[2]
@@ -150,13 +150,13 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 		local color_space = color_info.color_space
 		local channels = color_info.channels
 
-		local image = context.image
-		image.width = width
-		image.height = height
-		image.frames = 0
-		image.alpha = alpha
+		local parsed = context.parsed
+		parsed.width = width
+		parsed.height = height
+		parsed.frames = 0
+		parsed.alpha = alpha
 
-		local headers = image.headers
+		local headers = parsed.headers
 		headers.interlacing = interlacing == 1
 		headers.color_space = color_space
 		headers.bit_depth = bit_depth
@@ -174,7 +174,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 		local source = context.source
 
 		local palette = table.create(chunk_length // 3, 0xFF000000)
-		context.image.palette = palette
+		context.parsed.palette = palette
 
 		for index = 0, chunk_length // 3 - 1 do
 			local offset = chunk_offset + index * 3
@@ -188,10 +188,10 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 		local chunk_length = chunk_ranges[2]
 
 		local source = context.source
-		local image = context.image
+		local parsed = context.parsed
 
-		if image.headers.color_space == "indexed" then
-			local palette = image.palette
+		if parsed.headers.color_space == "indexed" then
+			local palette = parsed.palette
 			if not palette then return nil end
 
 			local count = math.min(chunk_length, #palette)
@@ -208,7 +208,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 			return decode_error("missing_chunk", "missing IDAT chunk")
 		end
 
-		if context.image.headers.color_space == "indexed" and not context.ranges["PLTE"] then
+		if context.parsed.headers.color_space == "indexed" and not context.ranges["PLTE"] then
 			return decode_error("missing_chunk", "missing PLTE chunk with indexed color type")
 		end
 
@@ -219,8 +219,8 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceRanges) -> DecodeError
 local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 	["truecolor"] = function(context, data)
 		local length = buffer.len(data)
-		local image = context.image
-		local headers = image.headers
+		local parsed = context.parsed
+		local headers = parsed.headers
 
 		local channels = headers.channels
 		local bit_depth = headers.bit_depth
@@ -241,7 +241,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 			end
 		end
 
-		local out = buffer.create(image.width * image.height * (bit_depth == 16 and 2 or 1) * 4)
+		local out = buffer.create(parsed.width * parsed.height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
 			if channels == 4 then
@@ -274,8 +274,8 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 	end,
 	["grayscale"] = function(context, data)
 		local length = buffer.len(data)
-		local image = context.image
-		local headers = image.headers
+		local parsed = context.parsed
+		local headers = parsed.headers
 
 		local channels = headers.channels
 		local bit_depth = headers.bit_depth
@@ -292,7 +292,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 			end
 		end
 
-		local out = buffer.create(image.width * image.height * (bit_depth == 16 and 2 or 1) * 4)
+		local out = buffer.create(parsed.width * parsed.height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
 			if channels == 2 then
@@ -346,13 +346,13 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 	end,
 	["indexed"] = function(context, data)
 		local length = buffer.len(data)
-		local image = context.image
-		local headers = image.headers
+		local parsed = context.parsed
+		local headers = parsed.headers
 
-		local palette = assert(image.palette)
+		local palette = assert(parsed.palette)
 		local bit_depth = headers.bit_depth
 
-		local out = buffer.create(image.width * image.height * 4)
+		local out = buffer.create(parsed.width * parsed.height * 4)
 
 		if bit_depth == 8 then
 			local cursor = 0
@@ -378,10 +378,10 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 
 local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
 	["rgba8"] = function(context, data)
-		local image = context.image
-		if image.headers.bit_depth < 16 then return data end
+		local parsed = context.parsed
+		if parsed.headers.bit_depth < 16 then return data end
 
-		local out = buffer.create(image.width * image.height * 4)
+		local out = buffer.create(parsed.width * parsed.height * 4)
 
 		local cursor = 0
 		for offset = 0, buffer.len(data) - 1, 8 do
@@ -396,10 +396,10 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
 		return out
 	end,
 	["rgba16"] = function(context, data)
-		local image = context.image
-		if image.headers.bit_depth == 16 then return data end
+		local parsed = context.parsed
+		if parsed.headers.bit_depth == 16 then return data end
 
-		local out = buffer.create(image.width * image.height * 2 * 4)
+		local out = buffer.create(parsed.width * parsed.height * 2 * 4)
 
 		local cursor = 0
 		for offset = 0, buffer.len(data) - 1, 4 do
@@ -416,18 +416,18 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
 	end,
 }
 
-local function unfilter(image: Image, data: buffer): (buffer?, ReadError)
-	local headers = image.headers
+local function unfilter(parsed: Parsed, data: buffer): (buffer?, ReadError)
+	local headers = parsed.headers
 
 	local bpp = (headers.bit_depth * headers.channels + 7) // 8
-	local row_width = (image.width * headers.bit_depth * headers.channels + 7) // 8
+	local row_width = (parsed.width * headers.bit_depth * headers.channels + 7) // 8
 
-	local out = buffer.create(image.height * row_width)
+	local out = buffer.create(parsed.height * row_width)
 
 	local offset = 0
 	local cursor = 0
 
-	for y = 1, image.height do
+	for y = 1, parsed.height do
 		local filter = buffer.readu8(data, offset)
 		offset += 1
 
@@ -483,7 +483,7 @@ local function unfilter(image: Image, data: buffer): (buffer?, ReadError)
 	return out, {code = "ok", message = ""}
 end
 
-local function concatenate_ranges(source: buffer, ranges: SourceRanges): buffer
+local function concatenate_ranges(source: buffer, ranges: SourceSpans): buffer
 	local out_size = 0
 	for size = 2, #ranges, 2 do
 		out_size += ranges[size]
@@ -514,7 +514,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 
 	local offset = 8
 
-	local image = context.image
+	local parsed = context.parsed
 	local crc_mode = context.crc
 
 	local order: {types.Chunk} = {}
@@ -568,27 +568,27 @@ local function parse_png(context: DecodeContext): DecodeError?
 		end
 	end
 
-	local out_size = image.height * ((image.width * image.headers.channels * image.headers.bit_depth + 7) // 8 + 1)
+	local out_size = parsed.height * ((parsed.width * parsed.headers.channels * parsed.headers.bit_depth + 7) // 8 + 1)
 	if out_size > MAX_BUFFER_SIZE then
 		return decode_error("overflow", "predetermined decompressed image data size exceeds buffer limits")
 	end
 
-	image.read = function(frame: number?, target: ColorTarget?): (Frame?, ReadError)
+	parsed.read = function(frame: number?, target: ColorTarget?): (Cel?, ReadError)
 		frame = frame and frame // 1 or 0
 		target = target or "rgba8" :: ColorTarget
 
 		local decompressed, err0 = zlib.decompress(concatenate_ranges(source, ranges["IDAT"]), out_size)
 		if not decompressed then return nil, err0 :: ReadError end
-		local unfiltered, err1 = unfilter(image, decompressed)
+		local unfiltered, err1 = unfilter(parsed, decompressed)
 		if not unfiltered then return nil, err1 :: ReadError end
 
-		local converted = CONVERT_COLOR[image.headers.color_space](context, unfiltered)
+		local converted = CONVERT_COLOR[parsed.headers.color_space](context, unfiltered)
 		local bitmap = CONVERT_TARGET[target](context, converted)
 
 		return {
 			bitmap = bitmap,
 			region = {
-				size = vector.create(image.width, image.height),
+				size = vector.create(parsed.width, parsed.height),
 				position = vector.zero
 			},
 			duration = 0,
@@ -598,7 +598,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 	return nil
 end
 
-return function(source: buffer | string, options: DecodeOptions?): (Image?, DecodeError)
+return function(source: buffer | string, options: DecodeOptions?): (Parsed?, DecodeError)
 	source = type(source) == "buffer" and source or buffer.fromstring(source)
 	options = options or {} :: DecodeOptions
 
@@ -609,13 +609,13 @@ return function(source: buffer | string, options: DecodeOptions?): (Image?, Deco
 		crc = options.crc or "all" :: "all",
 
 		ranges = {},
-		image = {
+		parsed = {
 			headers = {},
-		} :: Image,
+		} :: Parsed,
 	}
 
 	local err = parse_png(context)
 	if err then return nil, err end
 
-	return context.image, {code = "ok", message = ""}
+	return context.parsed, {code = "ok", message = ""}
 end

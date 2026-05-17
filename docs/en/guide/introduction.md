@@ -8,6 +8,7 @@ providing straightforward decoders & encoders for a growing range of formats.
   For codecs without encoding support, `encode()` returns an `"unsupported"` error.
 
 ## Example Usage
+
 Here, we use Picguin's [PNG](./png/) library to decode an image.
 
 ```bash
@@ -18,26 +19,26 @@ pesde install
 
 ```luau
 local png = require("@packages/png")
-local content = require("some/image/module")
+local image = require("some/image/module")
 
-local source: buffer | string -- raw PNG file data
+local source: buffer | string -- raw PNG data
 
--- png.decode(source: buffer | string, options: png.DecodeOptions?) -> png.Image
-local image, err = png.decode(source, {
+-- png.decode(source: buffer | string, options: png.DecodeOptions?) -> png.Parsed
+local parsed, err = png.decode(source, {
 	crc = "none" -- disable crc checks, improving parsing performance
 })
-if image == nil then
+if parsed == nil then
 	error(`error ({err.code}): {err.message}`)
 end
 
--- `image` provides image info and a read method
--- image.read(frame: number?, target: png.ColorTarget?) -> png.Frame
-local frame, err = image.read(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
-if frame == nil then
+-- `parsed` provides parsed image info and a read method
+-- parsed.read(frame: number?, target: png.ColorTarget?) -> png.Cel
+local cel, err = parsed.read(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
+if cel == nil then
 	error(`error ({err.code}): {err.message}`)
 end
 
-content:write(frame.bitmap, frame.region.size, frame.region.position)
+image:write(cel.bitmap, cel.region.size, cel.region.position)
 ```
 
 ::: warning

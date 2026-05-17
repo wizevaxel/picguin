@@ -14,8 +14,8 @@ export type DecodeErrorCode = decode.DecodeErrorCode
 export type DecodeError = decode.DecodeError
 export type ReadErrorCode = decode.ReadErrorCode
 export type ReadError = decode.ReadError
-export type Image = decode.Image
-export type Frame = decode.Frame
+export type Parsed = decode.Parsed
+export type Cel = decode.Cel
 export type BitmapRegion = decode.BitmapRegion
 export type DecodeOptions = decode.DecodeOptions
 
