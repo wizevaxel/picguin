@@ -14,7 +14,7 @@ hero:
       link: ./guide/introduction
     - theme: alt
       text: Benchmarks
-      link: ./benchmarks
+      link: ./benchmarks/png
 ---
 
 ---
