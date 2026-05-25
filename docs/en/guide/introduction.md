@@ -21,9 +21,9 @@ pesde install
 local png = require("@packages/png")
 local image = require("some/image/module")
 
-local source: buffer | string -- raw PNG data
+local source: buffer -- raw PNG data
 
--- png.decode(source: buffer | string, options: png.DecodeOptions?) -> png.Parsed
+-- png.decode(source: buffer, options: png.DecodeOptions?) -> png.Parsed
 local parsed, err = png.decode(source, {
 	crc = "none" -- disable crc checks, improving parsing performance
 })

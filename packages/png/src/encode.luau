@@ -8,5 +8,5 @@ export type EncodeErrorCode =
 export type EncodeError = types.Error<EncodeErrorCode>
 
 return function(): (nil, EncodeError)
-	return nil, {code = "unsupported", message = "PNG encoding is not supported yet"}
+	return nil, {code = "unsupported", message = "PNG encoding is currently unsupported"}
 end

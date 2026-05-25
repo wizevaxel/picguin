@@ -80,6 +80,10 @@ local function map<T>(t: {T}): {[T]: true}
 	return out
 end
 
+local function ok(): {code: "ok", message: ""}
+	return {code = "ok", message = ""}
+end
+
 local function decode_error(code: DecodeErrorCode, message: string): DecodeError
 	return {code = code, message = message}
 end
@@ -143,7 +147,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 		if interlacing > 1 then
 			return decode_error("invalid_header", `invalid interlacing specifier: {interlacing}`)
 		elseif interlacing == 1 then
-			return decode_error("unsupported", "interlacing is not supported")
+			return decode_error("unsupported", "interlacing is unsupported")
 		end
 
 		local alpha = color_type > 3
@@ -167,8 +171,10 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 	["PLTE"] = function(context, chunk_ranges)
 		local chunk_offset = chunk_ranges[1]
 		local chunk_length = chunk_ranges[2]
-		if chunk_length == 0 or chunk_length > 768 or chunk_length % 3 ~= 0 then
-			return decode_error("invalid_length", `invalid PLTE chunk length: expected 3-768 bytes in multiples of 3, got {chunk_length}`)
+		if chunk_length < 3 or chunk_length > 768 then
+			return decode_error("invalid_length", `invalid PLTE chunk length: expected 3-768 bytes, got {chunk_length}`)
+		elseif chunk_length % 3 ~= 0 then
+			return decode_error("invalid_length", `invalid PLTE chunk length: expected a multiple of 3, got {chunk_length}`)
 		end
 
 		local source = context.source
@@ -480,7 +486,7 @@ local function unfilter(parsed: Parsed, data: buffer): (buffer?, ReadError)
 		end
 	end
 
-	return out, {code = "ok", message = ""}
+	return out, ok()
 end
 
 local function concatenate_ranges(source: buffer, ranges: SourceSpans): buffer
@@ -568,9 +574,10 @@ local function parse_png(context: DecodeContext): DecodeError?
 		end
 	end
 
-	local out_size = parsed.height * ((parsed.width * parsed.headers.channels * parsed.headers.bit_depth + 7) // 8 + 1)
+	local row_width = parsed.width * parsed.headers.channels * parsed.headers.bit_depth + 7
+	local out_size = parsed.height * (row_width + 1)
 	if out_size > MAX_BUFFER_SIZE then
-		return decode_error("overflow", "predetermined decompressed image data size exceeds buffer limits")
+		return decode_error("overflow", "predetermined decompressed output too large")
 	end
 
 	parsed.read = function(frame: number?, target: ColorTarget?): (Cel?, ReadError)
@@ -592,14 +599,13 @@ local function parse_png(context: DecodeContext): DecodeError?
 				position = vector.zero
 			},
 			duration = 0,
-		}, {code = "ok", message = ""}
+		}, ok()
 	end
 
 	return nil
 end
 
-return function(source: buffer | string, options: DecodeOptions?): (Parsed?, DecodeError)
-	source = type(source) == "buffer" and source or buffer.fromstring(source)
+return function(source: buffer, options: DecodeOptions?): (Parsed?, DecodeError)
 	options = options or {} :: DecodeOptions
 
 	local context: DecodeContext = {
@@ -617,5 +623,5 @@ return function(source: buffer | string, options: DecodeOptions?): (Parsed?, Dec
 	local err = parse_png(context)
 	if err then return nil, err end
 
-	return context.parsed, {code = "ok", message = ""}
+	return context.parsed, ok()
 end
