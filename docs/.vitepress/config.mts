@@ -1,4 +1,5 @@
 import { defineConfig } from "vitepress"
+import { tabsMarkdownPlugin } from "vitepress-plugin-tabs"
 
 export default defineConfig({
 	title: "Picguin",
@@ -46,6 +47,9 @@ export default defineConfig({
 	},
 
 	markdown: {
+		config(md) {
+			md.use(tabsMarkdownPlugin)
+		},
 		theme: {
 			light: "catppuccin-latte",
 			dark: "catppuccin-mocha",

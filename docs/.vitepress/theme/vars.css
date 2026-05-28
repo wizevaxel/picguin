@@ -12,6 +12,8 @@
 		var(--picguin-4)
 	);
 
+	--vp-c-bg-mid: color-mix(in oklab, var(--vp-c-bg-alt) 50%, var(--vp-c-bg));
+
 	--vp-home-hero-name-color: transparent;
 	--vp-home-hero-name-background: var(--picguin-gradient);
 
@@ -24,4 +26,7 @@
 	--picguin-2: hsl(213, 76%, 77%);
 	--picguin-3: hsl(299, 55%, 72%);
 	--picguin-4: hsl(366, 90%, 66%);
+
+	--vp-plugin-tabs-tab-bg: var(--vp-c-bg-mid);
+	--vp-plugin-tabs-tab-divider: var(--vp-c-bg);
 }
