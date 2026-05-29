@@ -26,8 +26,8 @@ export default defineConfig({
 					text: "PNG",
 					items: [
 						{ text: "Overview", link: "/guide/png/" },
-						{ text: "Decode", link: "/guide/png/decode" },
-						{ text: "Encode", link: "/guide/png/encode" },
+						{ text: "Decoding", link: "/guide/png/decoding" },
+						{ text: "Encoding", link: "/guide/png/encoding" },
 						{ text: "Types", link: "/guide/png/types" },
 					],
 				},
