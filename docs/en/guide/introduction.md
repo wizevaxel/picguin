@@ -1,15 +1,16 @@
 # Introduction
 
 Picguin is a pure-Luau, strictly typed collection of high-performance image codecs,
-providing straightforward decoders & encoders for a growing range of formats.
+providing straightforward decoding & encoding for a growing range of formats.
 
 - Each codec is published as a [pesde](https://pesde.dev) package under the `picguin/` namespace.
-- All codecs export `decode(source, options)` and `encode(pixels, options)` functions.  
-  For codecs without encoding support, `encode()` returns an `"unsupported"` error.
+- All codecs export `decode()` and `encode()` functions.  
+  For decode-only formats, `encode()` returns an `"unsupported"` error.  
+  <span class="subtext">(for more information, see [Shared Types, Codecs](./shared#codecs))</span>
 
 ## Example Usage
 
-Here, we use Picguin's [PNG](./png/) library to decode an image.
+Using Picguin's [PNG](./png/) codec to decode an image:
 
 ```bash
 # package installation
@@ -23,16 +24,15 @@ local image = require("some/image/module")
 
 local source: buffer -- raw PNG data
 
--- png.decode(source: buffer, options: png.DecodeOptions?) -> png.Parsed
 local parsed, err = png.decode(source, {
-	crc = "none" -- disable crc checks, improving parsing performance
+	crc = "none" -- (PNG-specific) disable crc checks, improving parsing speed
 })
 if parsed == nil then
 	error(`error ({err.code}): {err.message}`)
 end
 
--- `parsed` provides parsed image info and a read method
--- parsed.read(frame: number?, target: png.ColorTarget?) -> png.Cel
+local width, height = parsed.width, parsed.height
+
 local cel, err = parsed.read(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
 if cel == nil then
 	error(`error ({err.code}): {err.message}`)
