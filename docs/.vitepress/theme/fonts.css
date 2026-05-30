@@ -9,3 +9,14 @@
 	font-display: fallback;
 	src: url("/picguin/fonts/RedHatMono/RedHatMono-Medium.woff2") format("woff2");
 }
+
+@font-face {
+	font-family: "Maple Mono";
+	font-display: fallback;
+	src: url("/picguin/fonts/MapleMono/MapleMono-Medium.woff2")
+}
+
+:root {
+	--vp-font-family-mono: "Maple Mono";
+	--vp-code-font-size: 0.839em;
+}
