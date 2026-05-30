@@ -50,9 +50,5 @@ export default defineConfig({
 		config(md) {
 			md.use(tabsMarkdownPlugin)
 		},
-		theme: {
-			light: "catppuccin-latte",
-			dark: "catppuccin-mocha",
-		},
 	},
 })

@@ -1,7 +1,6 @@
 import type { Theme } from "vitepress"
 import DefaultTheme from "vitepress/theme"
 import { enhanceAppWithTabs } from "vitepress-plugin-tabs/client"
-import "@catppuccin/vitepress/theme/mocha/lavender.css"
 import "./vars.css"
 import "./fonts.css"
 import "./global.css"

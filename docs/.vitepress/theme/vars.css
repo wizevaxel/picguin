@@ -14,6 +14,9 @@
 
 	--vp-c-bg-mid: color-mix(in oklab, var(--vp-c-bg-alt) 50%, var(--vp-c-bg));
 
+	--vp-c-yellow-2: #ca8010;
+	--vp-c-yellow-soft: #ea900824;
+
 	--vp-home-hero-name-color: transparent;
 	--vp-home-hero-name-background: var(--picguin-gradient);
 
@@ -26,6 +29,25 @@
 	--picguin-2: hsl(213, 76%, 77%);
 	--picguin-3: hsl(299, 55%, 72%);
 	--picguin-4: hsl(366, 90%, 66%);
+
+	--vp-c-text-1: #dfdfe1;
+	--vp-c-text-2: #98989f;
+	--vp-c-text-3: #6a6a71;
+
+	--vp-c-indigo-1: #a8b1ff;
+	--vp-c-indigo-2: #6d85ff;
+	--vp-c-indigo-3: #6272ff;
+	--vp-c-yellow-1: #ffbb6d;
+	--vp-c-yellow-2: #f7c274;
+	--vp-c-yellow-3: #cc8a20;
+	--vp-c-yellow-soft: #ffbb6229;
+
+	--vp-button-brand-text: var(--vp-c-bg-alt);
+	--vp-button-brand-bg: var(--vp-c-brand-1);
+	--vp-button-brand-hover-text: var(--vp-c-bg-alt);
+	--vp-button-brand-hover-bg: var(--vp-c-brand-2);
+	--vp-button-brand-active-text: var(--vp-c-bg-alt);
+	--vp-button-brand-active-bg: var(--vp-c-brand-1);
 
 	--vp-plugin-tabs-tab-bg: var(--vp-c-bg-mid);
 	--vp-plugin-tabs-tab-divider: var(--vp-c-bg);

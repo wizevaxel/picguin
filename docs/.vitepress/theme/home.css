@@ -22,7 +22,7 @@
 		font-size: 1.8em;
 		line-height: 1.6em;
 		opacity: 0.5;
-		color: var(--vp-c-brand-3);
+		color: var(--vp-c-brand-1);
 	}
 
 	@media (min-width: 960px) {
