@@ -2,4 +2,6 @@
 next: false
 ---
 
-here, we type
+# PNG: Types
+
+<!--@include: ./notes.md -->

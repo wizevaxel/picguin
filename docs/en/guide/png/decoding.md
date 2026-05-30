@@ -1,1 +1,4 @@
-here, we decode
+# PNG: Decoding
+
+<!--@include: ./notes.md -->
+
