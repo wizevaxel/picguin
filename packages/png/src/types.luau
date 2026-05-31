@@ -12,11 +12,13 @@ export type Error<Code> = {
 export type ColorSpace = "truecolor" | "grayscale" | "indexed"
 
 export type CriticalChunk =
-	| "IHDR" | "IDAT" | "PLTE" | "IEND"
+	| "IHDR" | "PLTE" | "IDAT" | "IEND"
 export type AncillaryChunk =
-	| "tRNS" | "gAMA" | "cHRM" | "sRGB"
-	| "iCCP" | "pHYs" | "bKGD" | "tEXt"
-	| "iTXt" | "zTXt" | "tIME" | "eXIf"
+	| "tRNS" | "cHRM" | "gAMA" | "iCCP"
+	| "sBIT" | "sRGB" | "cICP" | "mDCV"
+	| "cLLI" | "tEXt" | "zTXt" | "iTXt"
+	| "bKGD" | "pHYs" | "sPLT" | "eXIf"
+	| "tIME" | "acTL" | "fcTL" | "fdAT"
 export type Chunk = CriticalChunk | AncillaryChunk
 
 return nil
