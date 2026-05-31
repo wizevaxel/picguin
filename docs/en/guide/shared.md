@@ -59,7 +59,7 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 	height: number,
 	frames: number,
 
-	read: (frame: number?, target: ColorTarget?) -> (Cel?, ReadError),
+	cel: (frame: number?, target: ColorTarget?) -> (Cel?, ReadError),
 }
 ```
 
@@ -68,12 +68,12 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 | `width`  | Image width in pixels.                                                                               |
 | `height` | Image height in pixels.                                                                              |
 | `frames` | Image frame count. `1` by default if animation is unsupported.                                       |
-| `read`   | Decodes the image or a specified frame into a [`Cel`](#cel). <br> Default parameters: `(0, "rgba8")` |
+| `cel`   | Decodes the image or a specified frame into a [`Cel`](#cel). <br> Default parameters: `(0, "rgba8")` |
 
 - A **public base** is always exported directly from a codec, with format-specific extensions.  
   <span class="subtext">(e.g. PNG exports `png.Parsed`, an intersection of `Parsed` with additional properties)</span>
 
-In `read()`, the `frame` parameter wraps around the frame count, and can be negative.
+In `cel()`, the `frame` parameter wraps around the frame count, and can be negative.
 
 ---
 
@@ -84,7 +84,7 @@ In `read()`, the `frame` parameter wraps around the frame count, and can be nega
 | "rgba16"
 ```
 
-A string literal specifying the target format for `Cel.bitmap` when calling `Parsed.read()`.
+A string literal specifying the target format for `Cel.bitmap` when calling `Parsed.cel()`.
 
 ---
 
@@ -104,7 +104,7 @@ A string literal specifying the target format for `Cel.bitmap` when calling `Par
 | `region`   | Region to write `bitmap` into. Relevant when decoding [APNG](./png/) and GIF. |
 | `duration` | Frame duration. `0.0` by default if the image is not animated.                |
 
-A decoded frame returned by `Parsed.read()`, containing all information necessary to
+A decoded frame returned by `Parsed.cel()`, containing all information necessary to
 display the frame and progress animation.
 
 ---

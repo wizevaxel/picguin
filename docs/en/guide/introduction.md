@@ -33,7 +33,7 @@ end
 
 local width, height = parsed.width, parsed.height
 
-local cel, err = parsed.read(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
+local cel, err = parsed.cel(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
 if cel == nil then
 	error(`error ({err.code}): {err.message}`)
 end

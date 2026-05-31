@@ -18,14 +18,27 @@ export type DecodeErrorCode =
 	| "missing_chunk"
 export type DecodeError = types.Error<DecodeErrorCode>
 
-export type ReadErrorCode =
+export type CelErrorCode =
 	| zlib.DecompressErrorCode
 	| "invalid_filter"
-export type ReadError = types.Error<ReadErrorCode>
+	| "invalid_option"
+export type CelError = types.Error<CelErrorCode>
 
-export type ColorTarget =
-	| "rgba8"
-	| "rgba16"
+export type DecodeOptions = {
+	crc: ("all" | "critical" | "none")?,
+}
+
+type DecodeContext = {
+	source: buffer,
+	length: number,
+
+	crc: ("all" | "critical" | "none"),
+
+	spans: {[types.Chunk]: SourceSpans},
+	parsed: Parsed,
+}
+
+type SourceSpans = {number}
 
 export type Parsed = {
 	width: number,
@@ -41,8 +54,12 @@ export type Parsed = {
 	},
 	palette: {number}?,
 
-	read: (frame: number?, target: ColorTarget?) -> (Cel?, ReadError),
+	cel: (frame: number?, target: ColorTarget?) -> (Cel?, CelError),
 }
+
+export type ColorTarget =
+	| "rgba8"
+	| "rgba16"
 
 export type Cel = {
 	bitmap: buffer,
@@ -54,22 +71,6 @@ export type BitmapRegion = {
 	size: vector,
 	position: vector,
 }
-
-export type DecodeOptions = {
-	crc: ("all" | "critical" | "none")?,
-}
-
-type DecodeContext = {
-	source: buffer,
-	length: number,
-
-	crc: ("all" | "critical" | "none"),
-
-	ranges: {[types.Chunk]: SourceSpans},
-	parsed: Parsed,
-}
-
-type SourceSpans = {number}
 
 local function map<T>(t: {T}): {[T]: true}
 	local out: {[T]: true} = {}
@@ -88,7 +89,7 @@ local function decode_error(code: DecodeErrorCode, message: string): DecodeError
 	return {code = code, message = message}
 end
 
-local function read_error(code: ReadErrorCode, message: string): ReadError
+local function cel_error(code: CelErrorCode, message: string): CelError
 	return {code = code, message = message}
 end
 
@@ -109,9 +110,9 @@ local COLOR_TYPE_MAP: {[number]: {color_space: types.ColorSpace, channels: numbe
 }
 
 local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?} = {
-	["IHDR"] = function(context, chunk_ranges)
-		local chunk_offset = chunk_ranges[1]
-		local chunk_length = chunk_ranges[2]
+	["IHDR"] = function(context, chunk_spans)
+		local chunk_offset = chunk_spans[1]
+		local chunk_length = chunk_spans[2]
 		if chunk_length ~= 13 then
 			return decode_error("invalid_length", `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`)
 		end
@@ -168,9 +169,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["PLTE"] = function(context, chunk_ranges)
-		local chunk_offset = chunk_ranges[1]
-		local chunk_length = chunk_ranges[2]
+	["PLTE"] = function(context, chunk_spans)
+		local chunk_offset = chunk_spans[1]
+		local chunk_length = chunk_spans[2]
 		if chunk_length < 3 or chunk_length > 768 then
 			return decode_error("invalid_length", `invalid PLTE chunk length: expected 3-768 bytes, got {chunk_length}`)
 		elseif chunk_length % 3 ~= 0 then
@@ -189,9 +190,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["tRNS"] = function(context, chunk_ranges)
-		local chunk_offset = chunk_ranges[1]
-		local chunk_length = chunk_ranges[2]
+	["tRNS"] = function(context, chunk_spans)
+		local chunk_offset = chunk_spans[1]
+		local chunk_length = chunk_spans[2]
 
 		local source = context.source
 		local parsed = context.parsed
@@ -209,12 +210,12 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["IEND"] = function(context, chunk_ranges)
-		if not context.ranges["IDAT"] then
+	["IEND"] = function(context, chunk_spans)
+		if not context.spans["IDAT"] then
 			return decode_error("missing_chunk", "missing IDAT chunk")
 		end
 
-		if context.parsed.headers.color_space == "indexed" and not context.ranges["PLTE"] then
+		if context.parsed.headers.color_space == "indexed" and not context.spans["PLTE"] then
 			return decode_error("missing_chunk", "missing PLTE chunk with indexed color type")
 		end
 
@@ -232,9 +233,9 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 		local bit_depth = headers.bit_depth
 
 		local transparency: number?
-		if context.ranges["tRNS"] then
+		if context.spans["tRNS"] then
 			local source = context.source
-			local offset = context.ranges["tRNS"][1]
+			local offset = context.spans["tRNS"][1]
 
 			if bit_depth == 16 then
 				transparency = bit32.byteswap(buffer.readu16(source, offset) * 0x10000)
@@ -287,9 +288,9 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 		local bit_depth = headers.bit_depth
 
 		local transparency = -1
-		if context.ranges["tRNS"] then
+		if context.spans["tRNS"] then
 			local source = context.source
-			local offset = context.ranges["tRNS"][1]
+			local offset = context.spans["tRNS"][1]
 
 			if bit_depth == 8 then
 				transparency = buffer.readu8(source, offset)
@@ -422,7 +423,7 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
 	end,
 }
 
-local function unfilter(parsed: Parsed, data: buffer): (buffer?, ReadError)
+local function unfilter(parsed: Parsed, data: buffer): (buffer?, CelError)
 	local headers = parsed.headers
 
 	local bpp = (headers.bit_depth * headers.channels + 7) // 8
@@ -482,24 +483,24 @@ local function unfilter(parsed: Parsed, data: buffer): (buffer?, ReadError)
 				cursor += 1
 			end
 		else
-			return nil, read_error("invalid_filter", `invalid row filter: {filter}`)
+			return nil, cel_error("invalid_filter", `invalid row filter: {filter}`)
 		end
 	end
 
 	return out, ok()
 end
 
-local function concatenate_ranges(source: buffer, ranges: SourceSpans): buffer
+local function concatenate_spans(source: buffer, spans: SourceSpans): buffer
 	local out_size = 0
-	for size = 2, #ranges, 2 do
-		out_size += ranges[size]
+	for size = 2, #spans, 2 do
+		out_size += spans[size]
 	end
 
 	local out = buffer.create(out_size)
 	local cursor = 0
-	for index = 1, #ranges, 2 do
-		local size = ranges[index + 1]
-		buffer.copy(out, cursor, source, ranges[index], size)
+	for index = 1, #spans, 2 do
+		local size = spans[index + 1]
+		buffer.copy(out, cursor, source, spans[index], size)
 		cursor += size
 	end
 
@@ -524,7 +525,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 	local crc_mode = context.crc
 
 	local order: {types.Chunk} = {}
-	local ranges = context.ranges
+	local spans = context.spans
 
 	while true do
 		if offset + 8 > length then
@@ -551,14 +552,14 @@ local function parse_png(context: DecodeContext): DecodeError?
 			end
 		end
 
-		local chunk_ranges = ranges[chunk_type]
-		if not chunk_ranges then
-			chunk_ranges = {}
-			ranges[chunk_type] = chunk_ranges
+		local chunk_spans = spans[chunk_type]
+		if not chunk_spans then
+			chunk_spans = {}
+			spans[chunk_type] = chunk_spans
 		end
 
-		table.insert(chunk_ranges, offset)
-		table.insert(chunk_ranges, chunk_length)
+		table.insert(chunk_spans, offset)
+		table.insert(chunk_spans, chunk_length)
 		table.insert(order, chunk_type)
 
 		offset += chunk_length + 4
@@ -569,7 +570,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 	for _, chunk_type in order do
 		local parser = CHUNK_PARSER[chunk_type]
 		if parser then
-			local err = parser(context, ranges[chunk_type])
+			local err = parser(context, spans[chunk_type])
 			if err then return err end
 		end
 	end
@@ -580,14 +581,14 @@ local function parse_png(context: DecodeContext): DecodeError?
 		return decode_error("overflow", "predetermined decompressed output too large")
 	end
 
-	parsed.read = function(frame: number?, target: ColorTarget?): (Cel?, ReadError)
+	parsed.cel = function(frame: number?, target: ColorTarget?): (Cel?, CelError)
 		frame = frame and frame // 1 or 0
 		target = target or "rgba8" :: ColorTarget
 
-		local decompressed, err0 = zlib.decompress(concatenate_ranges(source, ranges["IDAT"]), out_size)
-		if not decompressed then return nil, err0 :: ReadError end
+		local decompressed, err0 = zlib.decompress(concatenate_spans(source, spans["IDAT"]), out_size)
+		if not decompressed then return nil, err0 :: CelError end
 		local unfiltered, err1 = unfilter(parsed, decompressed)
-		if not unfiltered then return nil, err1 :: ReadError end
+		if not unfiltered then return nil, err1 :: CelError end
 
 		local converted = CONVERT_COLOR[parsed.headers.color_space](context, unfiltered)
 		local bitmap = CONVERT_TARGET[target](context, converted)
@@ -614,7 +615,7 @@ return function(source: buffer, options: DecodeOptions?): (Parsed?, DecodeError)
 
 		crc = options.crc or "all" :: "all",
 
-		ranges = {},
+		spans = {},
 		parsed = {
 			headers = {},
 		} :: Parsed,
