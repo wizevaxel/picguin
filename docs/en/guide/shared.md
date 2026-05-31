@@ -27,7 +27,7 @@ All codecs export a table of two functions:
 
 ## General Types
 
-### `Error<Code>` <Badge type="danger">Private Base</Badge>
+### `Error<Code>` <Badge type="danger">Private Base</Badge> {#error}
 
 ```luau
 {
@@ -51,7 +51,7 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 
 ## Decode Types
 
-### `Parsed` <Badge type="warning">Public Base</Badge>
+### `Parsed` <Badge type="warning">Public Base</Badge> {#parsed}
 
 ```luau
 {
@@ -72,6 +72,8 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 
 - A **public base** is always exported directly from a codec, with format-specific extensions.  
   <span class="subtext">(e.g. PNG exports `png.Parsed`, an intersection of `Parsed` with additional properties)</span>
+
+In `read()`, the `frame` parameter wraps around the frame count, and can be negative.
 
 ### `ColorTarget`
 
