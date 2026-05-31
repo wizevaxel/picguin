@@ -75,6 +75,8 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 
 In `read()`, the `frame` parameter wraps around the frame count, and can be negative.
 
+---
+
 ### `ColorTarget`
 
 ```luau
@@ -83,6 +85,8 @@ In `read()`, the `frame` parameter wraps around the frame count, and can be nega
 ```
 
 A string literal specifying the target format for `Cel.bitmap` when calling `Parsed.read()`.
+
+---
 
 ### `Cel`
 
@@ -102,6 +106,8 @@ A string literal specifying the target format for `Cel.bitmap` when calling `Par
 
 A decoded frame returned by `Parsed.read()`, containing all information necessary to
 display the frame and progress animation.
+
+---
 
 ### `BitmapRegion`
 
