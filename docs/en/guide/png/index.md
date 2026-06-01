@@ -6,6 +6,10 @@ prev: false
 
 <!--@include: ./notes.md -->
 
+The implementation of this codec is based on the [PNG 3.0 specification](https://www.w3.org/TR/png-3/).
+
+## Installation
+
 PNG can be installed using the following methods:
 
 ::: tabs

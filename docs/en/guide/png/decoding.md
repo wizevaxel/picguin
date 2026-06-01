@@ -4,11 +4,11 @@
 
 ## Options
 
-`decode()` accepts an optional `png.DecodeOptions` table to configure decoding behavior:
+[`decode()`](../shared#codecs) accepts an optional [`png.DecodeOptions`](./types#decodeoptions) table to configure decoding behavior:
 
-- `options.crc`: String literal specifying which chunk checksums are validated.
-  - `"all"` (default): Validates all chunks, any mismatch triggers a fatal error.
-  - `"critical"`: Validates only critical chunks, ancillary chunks are skipped.
+- `crc`: String literal specifying which chunk checksums are validated.
+  - `"all"` (default): All chunks are validated.
+  - `"critical"`: Only critical chunks are validated.
   - `"none"`: Checksum validation is skipped entirely.
 
 ## Static Image Example
@@ -33,7 +33,7 @@ end
 ## Features
 
 - **Color types:** Truecolor, grayscale, and indexed color are all supported.
-- **16-bit depth:** Supported. Use a 16-bit color target in `cel()` to preserve full color depth.
+- **16-bit depth:** Supported. Use a 16-bit color target in [`cel()`](../shared#parsed) to preserve full color depth.
 - **Metadata:** A public API to read specific metadata is planned.
 - **APNG:** Currently not supported, will be implemented soon.
 - **Interlacing:** Currently not supported, will be implemented after APNG.
