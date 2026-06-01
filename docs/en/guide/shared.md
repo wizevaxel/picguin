@@ -11,19 +11,21 @@ All packages will remain pre-v1.0.0 until a stable design is in place.
 
 ## Codecs
 
-All codecs export a table of two functions:
+All codecs export this specific shape:
 
 ```luau
 {
+	version: string,
 	decode: (source: buffer, options: DecodeOptions?) -> (Parsed, DecodeError),
 	encode: () -> (), -- TBD
 }
 ```
 
-| Property | Description                                                                   |
-| -------- | ----------------------------------------------------------------------------- |
-| `decode` | Parses a source image into a format-specific [`Parsed`](#parsed-public-base). |
-| `encode` | (TBD)                                                                         |
+| Property  | Description                                                                   |
+| --------- | ----------------------------------------------------------------------------- |
+| `version` | The current version of the codec package.                                     |
+| `decode`  | Parses a source image into a format-specific [`Parsed`](#parsed-public-base). |
+| `encode`  | (TBD)                                                                         |
 
 ## General Types
 
