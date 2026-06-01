@@ -29,7 +29,7 @@ local function publish_targets(codec: string, package_dir: string)
 	local config_original = fs.readFile(config_path)
 
 	local function publish()
-		local result = process.exec("pesde", {"publish", "-d", "-y"}, {cwd = package_dir})
+		local result = process.exec("pesde", {"publish", "-y"}, {cwd = package_dir})
 		if not result.ok then
 			fs.writeFile(config_path, config_original)
 			error(result.stderr)
