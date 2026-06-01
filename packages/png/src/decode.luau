@@ -582,8 +582,16 @@ local function parse_png(context: DecodeContext): DecodeError?
 	end
 
 	parsed.cel = function(frame: number?, target: ColorTarget?): (Cel?, CelError)
+		if type(frame) ~= "number" then
+			return nil, cel_error("invalid_option", "specified frame must be a number")
+		end
+
 		frame = frame and frame // 1 or 0
 		target = target or "rgba8" :: ColorTarget
+
+		if not CONVERT_TARGET[target] then
+			return nil, cel_error("invalid_option", `invalid color target: {target}`)
+		end
 
 		local decompressed, err0 = zlib.decompress(concatenate_spans(source, spans["IDAT"]), out_size)
 		if not decompressed then return nil, err0 :: CelError end
