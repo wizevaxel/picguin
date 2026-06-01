@@ -12,8 +12,8 @@ export type Chunk = types.Chunk
 
 export type DecodeErrorCode = decode.DecodeErrorCode
 export type DecodeError = decode.DecodeError
-export type ReadErrorCode = decode.ReadErrorCode
-export type ReadError = decode.ReadError
+export type CelErrorCode = decode.CelErrorCode
+export type CelError = decode.CelError
 export type Parsed = decode.Parsed
 export type Cel = decode.Cel
 export type BitmapRegion = decode.BitmapRegion
