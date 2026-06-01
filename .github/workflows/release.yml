@@ -1,0 +1,43 @@
+name: Release Codec
+
+on:
+  workflow_dispatch:
+    inputs:
+      codec:
+        type: choice
+        required: true
+        options:
+          - png
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rokit
+        uses: CompeyDev/setup-rokit@v0.2.1
+
+      - name: Setup pesde
+        uses: pesde-pkg/setup@v1
+        with:
+          token: ${{ secrets.PESDE_TOKEN }}
+
+      - run: pesde install
+
+      - name: Release
+        run: lune run .scripts/release ${{ inputs.codec }}
+
+      - run: echo "RELEASE_NAME=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
+      - name: Upload to Draft Release
+        uses: softprops/action-gh-release@v3
+        with:
+          draft: true
+          name: ${{ env.RELEASE_NAME }}
+          tag_name: ${{ env.RELEASE_NAME }}
+          files: release/${{ inputs.codec }}.rbxm
