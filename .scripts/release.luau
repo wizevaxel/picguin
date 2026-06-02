@@ -26,30 +26,34 @@ end
 local function publish_targets(codec: string, package_dir: string)
 	local config_path = `{package_dir}/pesde.toml`
 	assert(fs.isFile(config_path), "codec package has no pesde.toml")
-	local config_original = fs.readFile(config_path)
+	local config_source = fs.readFile(config_path)
 
 	local function publish()
 		local result = process.exec("pesde", {"publish", "-y"}, {cwd = package_dir})
 		if not result.ok then
-			fs.writeFile(config_path, config_original)
 			error(result.stderr)
 		end
 	end
 
 	publish()
 
-	local config = serde.decode("toml", config_original)
-	config.scripts = nil
-	config.dev_dependencies = nil
-	config.target.build_files = nil
+	local ok, err = pcall(function()
+		local config = serde.decode("toml", config_source)
+		config.scripts = nil
+		config.dev_dependencies = nil
+		config.target.build_files = nil
 
-	for _, target in {"lune", "luau"} do
-		config.target.environment = target
-		fs.writeFile(config_path, serde.encode("toml", config))
-		publish()
+		for _, target in {"lune", "luau"} do
+			config.target.environment = target
+			fs.writeFile(config_path, serde.encode("toml", config))
+			publish()
+		end
+	end)
+
+	fs.writeFile(config_path, config_source)
+	if not ok then
+		error(err)
 	end
-
-	fs.writeFile(config_path, config_original)
 end
 
 local function release()

@@ -19,6 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Set release name
+        run: echo "RELEASE_NAME=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+
       - name: Setup Rokit
         uses: CompeyDev/setup-rokit@v0.2.1
 
@@ -27,14 +30,13 @@ jobs:
         with:
           token: ${{ secrets.PESDE_TOKEN }}
 
-      - run: pesde install
+      - name: Setup pesde workspace
+        run: pesde install
 
-      - name: Release
+      - name: Build and release
         run: lune run .scripts/release ${{ inputs.codec }}
 
-      - run: echo "RELEASE_NAME=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
-      - name: Upload to Draft Release
+      - name: Draft release
         uses: softprops/action-gh-release@v3
         with:
           draft: true
