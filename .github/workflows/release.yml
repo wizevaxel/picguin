@@ -34,7 +34,7 @@ jobs:
         run: pesde install
 
       - name: Build and release
-        run: lune run .scripts/release ${{ inputs.codec }}
+        run: lune run scripts/release ${{ inputs.codec }}
 
       - name: Draft release
         uses: softprops/action-gh-release@v3
