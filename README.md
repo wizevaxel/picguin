@@ -22,6 +22,10 @@ It provides a standardized interface for straightforward decoding & encoding.
 - Seamlessly compatible with Roblox, Lune, and other Luau runtimes
 - Architected to easily scale and support new formats over time
 
+> [!WARNING]
+> Picguin is in early development, and the public API across codecs is subject to change.  
+> All packages will remain pre-v1.0.0 until a stable design is in place.
+
 ## Get Started
 
 [**View the documentation**](https://wizevaxel.github.io/picguin/guide/introduction) to get started with Picguin.
