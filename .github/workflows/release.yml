@@ -32,7 +32,7 @@ jobs:
         run: pesde install
 
       - name: Build and release
-        run: lune run scripts/release ${{ inputs.codec }}
+        run: lune run release ${{ inputs.codec }}
 
       - name: Create Release
         env:
