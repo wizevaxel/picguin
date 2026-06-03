@@ -16,7 +16,7 @@ All codecs export this specific shape:
 ```luau
 {
 	version: string,
-	decode: (source: buffer, options: DecodeOptions?) -> (Parsed, DecodeError),
+	decode: (source: buffer, options: DecodeOptions?) -> (Parsed?, DecodeError),
 	encode: () -> (), -- TBD
 }
 ```
@@ -26,6 +26,8 @@ All codecs export this specific shape:
 | `version` | The current version of the codec package.                                     |
 | `decode`  | Parses a source image into a format-specific [`Parsed`](#parsed-public-base). |
 | `encode`  | (TBD)                                                                         |
+
+For decode-only formats, `encode()` returns an `"unsupported"` error.
 
 ## General Types
 
@@ -61,7 +63,7 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 	height: number,
 	frames: number,
 
-	cel: (frame: number?, target: ColorTarget?) -> (Cel?, ReadError),
+	cel: (frame: number?, target: ColorTarget?) -> (Cel?, CelError),
 }
 ```
 

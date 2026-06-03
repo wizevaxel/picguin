@@ -61,16 +61,13 @@ Equivalent to `CriticalChunk | AncillaryChunk`.
 }
 ```
 
-| Property  | Description                                                                    |
-| --------- | ------------------------------------------------------------------------------ |
-| `headers` | Image information obtained from the IHDR chunk.                                |
-| `palette` | Array of colors assigned to palette indexes. `nil` if image has no PLTE chunk. |
-| `...`     | (see [`Parsed`](../shared#parsed))                                             |
+| Property  | Description                                                                                                    |
+| --------- | -------------------------------------------------------------------------------------------------------------- |
+| `headers` | Image information obtained from the IHDR chunk.                                                                |
+| `palette` | Array of packed `RGBA8` colors assigned to palette indexes (1-indexed). <br> `nil` if image has no PLTE chunk. |
+| `...`     | (see [`Parsed`](../shared#parsed))                                                                             |
 
 PNG-specific extension of [`Parsed`](../shared#parsed).
-
-`palette` values contain the RGBA components of the color corresponding to their index
-packed sequentially in little-endian byte order.
 
 ---
 

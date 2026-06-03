@@ -14,21 +14,21 @@ PNG can be installed using the following methods:
 
 ::: tabs
 
-=== Using pesde
-All codec packages are published under the `picguin/` namespace.
+=== Using pesde (package manager)
+  
+Install [pesde](https://docs.pesde.dev/), and run the following commands in your project:
 
-1. Install [pesde](https://docs.pesde.dev/)
-2. Add and install `picguin/png`:
-   ```bash
-   pesde add picguin/png
-   pesde install
-   ```
-   PNG will be installed under the target environment defined in your `pesde.toml`.
+```bash
+pesde add picguin/png
+pesde install
+```
+
+PNG will be installed under the target environment defined in your `pesde.toml`.
 
 === Using .rbxm releases
-Each GitHub release provides the latest version of all codecs as .rbxm binaries.
 
-1. Navigate to the [latest GitHub release](https://github.com/wizevaxel/picguin/releases/latest)
-2. Locate and download the latest `png.rbxm`, and drop it directly into your project.
+Download a release of your choosing, and drop it straight into your project:
+
+- [png@**v0.1.0**](https://github.com/wizevaxel/picguin/releases/png@v0.1.0) **(latest)**
 
 :::
