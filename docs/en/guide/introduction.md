@@ -34,7 +34,7 @@ The codec will be installed under the target environment defined in your `pesde.
 For non-pesde environments, codecs are released on GitHub as prebuilt `.rbxm` files,
 which you can drop straight into your project.
 
-Links to the latest releases of all codecs are listed in the [repository README](https://github.com/wizevaxel/picguin/blob/main/README.md).  
+Links to the latest releases of all codecs are listed in the [repository README](https://github.com/wizevaxel/picguin/blob/main/README.md#codecs).  
 The **Overview** pages for each codec also provide specific install instructions.
 
 :::
