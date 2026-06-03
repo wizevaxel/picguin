@@ -39,6 +39,13 @@ local function publish_targets(codec: string, package_dir: string)
 
 	local ok, err = pcall(function()
 		local config = serde.decode("toml", config_source)
+
+		local github_env = process.env.GITHUB_ENV
+		if github_env then
+			local env = fs.isFile(github_env) and fs.readFile(github_env) or ""
+			fs.writeFile(github_env, env .. `RELEASE_TAG={codec}@v{config.version}\n`)
+		end
+
 		config.scripts = nil
 		config.dev_dependencies = nil
 		config.target.build_files = nil

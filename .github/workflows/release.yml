@@ -19,9 +19,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Set release name
-        run: echo "RELEASE_NAME=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-
       - name: Setup Rokit
         uses: CompeyDev/setup-rokit@v0.2.1
 
@@ -36,10 +33,7 @@ jobs:
       - name: Build and release
         run: lune run scripts/release ${{ inputs.codec }}
 
-      - name: Draft release
-        uses: softprops/action-gh-release@v3
-        with:
-          draft: true
-          name: ${{ env.RELEASE_NAME }}
-          tag_name: ${{ env.RELEASE_NAME }}
-          files: release/${{ inputs.codec }}.rbxm
+      - name: Create Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ env.RELEASE_TAG }}" "release/${{ inputs.codec }}.rbxm" --title "${{ env.RELEASE_TAG }}" --draft
