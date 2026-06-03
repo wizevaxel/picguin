@@ -29,6 +29,7 @@ PNG will be installed under the target environment defined in your `pesde.toml`.
 
 Download a release of your choosing, and drop it straight into your project:
 
-- [png@**v0.1.0**](https://github.com/wizevaxel/picguin/releases/png@v0.1.0) **(latest)**
+- [png@**v0.1.1**](https://github.com/wizevaxel/picguin/releases/png@v0.1.1) **(latest)**
+- [png@**v0.1.0**](https://github.com/wizevaxel/picguin/releases/png@v0.1.0)
 
 :::

@@ -45,6 +45,6 @@ local cel = parsed.cel(0, "rgba8") -- decode frame 0 bitmap, region, duration, e
 
 | Format  | Package       | Latest Release                                                             |
 | ------- | ------------- | -------------------------------------------------------------------------- |
-| **PNG** | `picguin/png` | [png@**v0.1.0**](https://github.com/wizevaxel/picguin/releases/png@v0.1.0) |
+| **PNG** | `picguin/png` | [png@**v0.1.1**](https://github.com/wizevaxel/picguin/releases/png@v0.1.1) |
 
 ###### (You may also view codec packages on the [**pesde registry**](https://pesde.dev/search?q=picguin))
