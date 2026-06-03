@@ -582,7 +582,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 	end
 
 	parsed.cel = function(frame: number?, target: ColorTarget?): (Cel?, CelError)
-		if type(frame) ~= "number" then
+		if frame and type(frame) ~= "number" then
 			return nil, cel_error("invalid_option", "specified frame must be a number")
 		end
 
