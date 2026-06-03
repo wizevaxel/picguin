@@ -3,16 +3,16 @@
 		<source media="(prefers-color-scheme: dark)" srcset="docs/public/heading-dark.svg" />
 		<img src="docs/public/heading-light.svg" height="192" />
 	</picture>
-	<div>
-		<a href="https://wizevaxel.github.io/picguin/">
-			<img src="https://badgen.net/badge/picguin/docs?label=&color=f0546e&labelColor=cc4053&icon=gitbook" />
-		</a>
-		<a href="https://github.com/wizevaxel/picguin/blob/main/LICENSE">
-			<img src="https://badgen.net/static/license/MIT?color=56c46a&labelColor=47a162" />
-		</a>
-	</div>
-	<h2></h2>
 </div>
+
+<div align="center">
+
+[![docs](https://badgen.net/badge/picguin/docs?label=&color=f0546e&labelColor=cc4053&icon=gitbook)](https://wizevaxel.github.io/picguin/)
+[![license](https://badgen.net/static/license/MIT?color=56c46a&labelColor=47a162)](https://github.com/wizevaxel/picguin/blob/main/LICENSE)
+
+</div>
+
+##
 
 Picguin is a collection of fast, pure Luau image codecs for a growing range of formats.  
 It provides a standardized interface for straightforward decoding & encoding.
