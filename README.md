@@ -17,7 +17,7 @@
 Picguin is a collection of fast, pure Luau image codecs for a growing range of formats.  
 It provides a standardized interface for straightforward decoding & encoding.
 
-- Fully strictly typed, optimized using modern techniques for maximum performance
+- Fully type-safe, optimized using modern techniques for maximum performance
 - Lightweight, self-contained implementations with zero dependencies
 - Seamlessly compatible with Roblox, Lune, and other Luau runtimes
 - Architected to easily scale and support new formats over time
