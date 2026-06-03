@@ -20,7 +20,7 @@ export type BitmapRegion = decode.BitmapRegion
 export type DecodeOptions = decode.DecodeOptions
 
 return table.freeze {
-	version = "0.1.0",
+	version = "0.1.1",
 	decode = decode,
 	encode = encode,
 }
