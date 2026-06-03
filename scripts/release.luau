@@ -28,18 +28,16 @@ local function publish_targets(codec: string, package_dir: string)
 	assert(fs.isFile(config_path), "codec package has no pesde.toml")
 	local config_source = fs.readFile(config_path)
 
-	local function publish()
-		local result = process.exec("pesde", {"publish", "-y"}, {
-			cwd = package_dir,
-			env = process.env :: {[string]: string}
-		})
+	local function publish(target: string)
+		print(`publishing target: {target}`)
+
+		local result = process.exec("pesde", {"publish", "-y"}, {cwd = package_dir})
 		if not result.ok then
 			error(result.stderr)
 		end
 	end
 
-	print("publishing target: roblox")
-	publish()
+	publish("roblox")
 
 	local ok, err = pcall(function()
 		local config = serde.decode("toml", config_source)
@@ -57,8 +55,7 @@ local function publish_targets(codec: string, package_dir: string)
 		for _, target in {"lune", "luau"} do
 			config.target.environment = target
 			fs.writeFile(config_path, serde.encode("toml", config))
-			print(`publishing target: {target}`)
-			publish()
+			publish(target)
 		end
 	end)
 
