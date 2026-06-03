@@ -30,10 +30,9 @@ if cel == nil then
 end
 ```
 
-## Features
+## Compatibility
 
-- **Color types:** Truecolor, grayscale, and indexed color are all supported.
 - **16-bit depth:** Supported. Use a 16-bit color target in [`cel()`](../shared#parsed) to preserve full color depth.
-- **Metadata:** A public API to read specific metadata is planned.
-- **APNG:** Currently not supported, will be implemented soon.
-- **Interlacing:** Currently not supported, will be implemented after APNG.
+- **Metadata:** Ancillary chunks are parsed, but not yet exposed via a public API (planned)
+- **Animation (APNG):** Unsupported (planned)
+- **Interlacing (Adam7):** Unsupported (planned)
