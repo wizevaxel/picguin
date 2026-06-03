@@ -28,27 +28,26 @@ local function publish_targets(codec: string, package_dir: string)
 	assert(fs.isFile(config_path), "codec package has no pesde.toml")
 	local config_source = fs.readFile(config_path)
 
+	local config = serde.decode("toml", config_source)
+	local release_tag = `{codec}@v{config.version}`
+
+	local result = process.exec("gh", {"release", "view", release_tag})
+	assert(not result.ok, `release '{release_tag}' already exists`)
+
 	local function publish(target: string)
 		print(`publishing target: {target}`)
 
-		local result = process.exec("pesde", {"publish", "-y"}, {
-			cwd = package_dir,
-			env = process.env :: {[string]: string},
-		})
-		if not result.ok then
-			error(result.stderr)
-		end
+		local result = process.exec("pesde", {"publish", "-y"}, {cwd = package_dir})
+		assert(result.ok, result.stderr)
 	end
 
-	publish("roblox")
-
 	local ok, err = pcall(function()
-		local config = serde.decode("toml", config_source)
+		publish("roblox")
 
 		local github_env = process.env.GITHUB_ENV
 		if github_env then
 			local env = fs.isFile(github_env) and fs.readFile(github_env) or ""
-			fs.writeFile(github_env, env .. `RELEASE_TAG={codec}@v{config.version}\n`)
+			fs.writeFile(github_env, env .. `RELEASE_TAG={release_tag}\n`)
 		end
 
 		config.scripts = nil
