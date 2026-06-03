@@ -25,6 +25,7 @@ jobs:
       - name: Setup pesde
         uses: pesde-pkg/setup@v1
         with:
+          token: ${{ secrets.PESDE_TOKEN }}
           cwd: packages/${{ inputs.codec }}
 
       - name: Setup pesde workspace
