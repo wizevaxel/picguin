@@ -8,7 +8,7 @@ export default defineConfig({
 	cleanUrls: true,
 
 	head: [
-		["link", { rel: "icon", type: "image/svg+xml", href: "/picguin/favicon.svg" }]
+		["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }]
 	],
 
 	rewrites: {
