@@ -31,7 +31,10 @@ local function publish_targets(codec: string, package_dir: string)
 	local function publish(target: string)
 		print(`publishing target: {target}`)
 
-		local result = process.exec("pesde", {"publish", "-y"}, {cwd = package_dir})
+		local result = process.exec("pesde", {"publish", "-y"}, {
+			cwd = package_dir,
+			env = process.env :: {[string]: string},
+		})
 		if not result.ok then
 			error(result.stderr)
 		end
