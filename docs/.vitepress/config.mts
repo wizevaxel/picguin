@@ -7,6 +7,10 @@ export default defineConfig({
 	base: "/picguin/",
 	cleanUrls: true,
 
+	head: [
+		["link", { rel: "icon", type: "image/svg+xml", href: "/picguin/favicon.svg" }]
+	],
+
 	rewrites: {
 		"en/:rest*": ":rest*",
 	},
