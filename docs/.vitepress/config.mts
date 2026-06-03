@@ -5,11 +5,8 @@ export default defineConfig({
 	title: "Picguin",
 	description: "High-performance Luau image codecs",
 	base: "/picguin/",
+	head: [["link", { rel: "icon", href: "/picguin/favicon.svg" }]],
 	cleanUrls: true,
-
-	head: [
-		["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }]
-	],
 
 	rewrites: {
 		"en/:rest*": ":rest*",
