@@ -1,8 +1,8 @@
 :root {
-	--picguin-1: hsl(131, 65%, 65%);
-	--picguin-2: hsl(213, 76%, 70%);
-	--picguin-3: hsl(299, 55%, 64%);
-	--picguin-4: hsl(366, 90%, 64%);
+	--picguin-1: #6ce081;
+	--picguin-2: #78aded;
+	--picguin-3: #d471d6;
+	--picguin-4: #f66151;
 
 	--picguin-gradient: linear-gradient(
 		to right,
@@ -25,10 +25,10 @@
 }
 
 .dark {
-	--picguin-1: hsl(133, 76%, 75%);
-	--picguin-2: hsl(213, 76%, 77%);
-	--picguin-3: hsl(299, 55%, 72%);
-	--picguin-4: hsl(366, 90%, 66%);
+	--picguin-1: #8ff0a4;
+	--picguin-2: #98c0f1;
+	--picguin-3: #de90df;
+	--picguin-4: #f66a5a;
 
 	--vp-c-text-1: #efeff1;
 	--vp-c-text-2: #aaaaaf;
