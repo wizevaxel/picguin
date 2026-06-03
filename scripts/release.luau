@@ -38,6 +38,7 @@ local function publish_targets(codec: string, package_dir: string)
 		end
 	end
 
+	print("publishing target: roblox")
 	publish()
 
 	local ok, err = pcall(function()
@@ -56,6 +57,7 @@ local function publish_targets(codec: string, package_dir: string)
 		for _, target in {"lune", "luau"} do
 			config.target.environment = target
 			fs.writeFile(config_path, serde.encode("toml", config))
+			print(`publishing target: {target}`)
 			publish()
 		end
 	end)
