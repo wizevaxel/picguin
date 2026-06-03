@@ -29,6 +29,8 @@ jobs:
         run: pesde install
 
       - name: Build and release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: lune run scripts/release ${{ inputs.codec }}
 
       - name: Create Release
