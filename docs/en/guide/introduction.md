@@ -8,7 +8,7 @@ It provides a standardized interface for straightforward decoding & encoding.
 - Seamlessly compatible with Roblox, Lune, and other Luau runtimes
 - Architected to easily scale and support new formats over time
 
-## Installing Codecs
+## Installation
 
 Picguin codecs can be individually installed using the following methods:
 
@@ -31,11 +31,9 @@ The codec will be installed under the target environment defined in your `pesde.
 
 === Using .rbxm releases
 
-For non-pesde environments, codecs are released on GitHub as prebuilt `.rbxm` files,
-which you can drop straight into your project.
+For non-pesde environments, codecs are released on GitHub as prebuilt `.rbxm` files.
 
-Links to the latest releases of all codecs are listed in the [repository README](https://github.com/wizevaxel/picguin/blob/main/README.md#codecs).  
-The **Overview** pages for each codec also provide specific install instructions.
+View the list under [README, **Codecs**](https://github.com/wizevaxel/picguin/blob/main/README.md#codecs) for latest releases of each codec.
 
 :::
 
