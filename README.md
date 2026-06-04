@@ -48,4 +48,4 @@ View [Introduction, **Installation**](https://wizevaxel.github.io/picguin/guide/
 <!-- prettier-ignore -->
 | Format   | [pesde](https://pesde.dev/search?q=picguin) Package | `.rbxm` Releases |
 | -------- | -------------- | - |
-| **PNG**  | `picguin/png`  | [**Latest** (**v0.1.1**)](https://github.com/wizevaxel/picguin/releases/png@v0.1.1) <br> [Older Releases](https://github.com/wizevaxel/picguin/releases?q=png%40) |
+| **PNG**  | `picguin/png`  | [**Latest** (**v0.1.1**)](https://github.com/wizevaxel/picguin/releases/png@v0.1.1) <br> [All Releases](https://github.com/wizevaxel/picguin/releases?q=png%40) |
