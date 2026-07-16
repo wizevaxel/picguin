@@ -18,6 +18,10 @@
 	color: transparent;
 }
 
+.vp-doc h3 > .VPBadge {
+	transform: translateY(0);
+}
+
 .subtext {
 	font-size: 0.9em;
 	color: var(--vp-c-text-2);

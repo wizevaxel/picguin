@@ -5,9 +5,19 @@ next: false
 # Shared Types
 
 ::: warning
-Picguin is in early development, and the public API across codecs is subject to change.  
-All packages will remain pre-v1.0.0 until a stable design is in place.
+
+**Picguin is in early development**, and the interface across codecs is subject to change.  
+All packages will remain pre-v1.0.0 until the design is finalized.
+
 :::
+
+### Notes
+
+ <Badge type="warning">Public Base</Badge> - Always exported directly from a codec, with format-specific extensions.  
+<span class="subtext">(e.g. PNG exports [`png.Parsed`](./png/types#parsed), an extension of [`Parsed`](#parsed) with additional properties)</span>
+
+ <Badge type="danger">Private Base</Badge> - Inherited by types internally, never exported directly from a codec.  
+<span class="subtext">(e.g. PNG exports [`png.DecodeError`](./png/types#decodeerror), equivalent to [`Error<png.DecodeErrorCode>`](#error))</span>
 
 ## Codecs
 
@@ -21,11 +31,11 @@ All codecs export this specific shape:
 }
 ```
 
-| Property  | Description                                                                   |
-| --------- | ----------------------------------------------------------------------------- |
-| `version` | The current version of the codec package.                                     |
-| `decode`  | Parses a source image into a format-specific [`Parsed`](#parsed-public-base). |
-| `encode`  | (TBD)                                                                         |
+| Property  | Description                                                       |
+| --------- | ----------------------------------------------------------------- |
+| `version` | The current version of the codec package.                         |
+| `decode`  | Parses a source image into a format-specific [`Parsed`](#parsed). |
+| `encode`  | (TBD)                                                             |
 
 For decode-only formats, `encode()` returns an `"unsupported"` error.
 
@@ -47,9 +57,6 @@ For decode-only formats, `encode()` returns an `"unsupported"` error.
 | --------- | -------------------------------------------------------------------------------- |
 | `code`    | String literal representing the error. `"ok"` if no fatal error was encountered. |
 | `message` | Human-readable string providing more detail on the error.                        |
-
-- A **private base** is inherited by types internally, but never exported directly from a codec.  
-  <span class="subtext">(e.g. PNG exports [`png.DecodeError`](./png/types#decodeerror), equivalent to `Error<png.DecodeErrorCode>`)</span>
 
 All public functions return a type inherited from `Error<Code>` to indicate success/failure.
 
@@ -73,9 +80,6 @@ All public functions return a type inherited from `Error<Code>` to indicate succ
 | `height` | Image height in pixels.                                                                                                         |
 | `frames` | Image frame count. `1` by default if animation is unsupported.                                                                  |
 | `cel`    | Decodes the image or a specified frame into a [`Cel`](#cel). <br> Default parameters: <code>(0, ["rgba8"](#colortarget))</code> |
-
-- A **public base** is always exported directly from a codec, with format-specific extensions.  
-  <span class="subtext">(e.g. PNG exports [`png.Parsed`](./png/types#parsed), an extension of `Parsed` with additional properties)</span>
 
 In `cel()`, the `frame` parameter wraps around the frame count, and can be negative.
 

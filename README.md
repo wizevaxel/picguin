@@ -14,23 +14,23 @@
 
 ##
 
-Picguin is a collection of fast, pure Luau image codecs for a growing range of formats.  
-It provides a standardized interface for straightforward decoding & encoding.
+**Picguin** is a collection of pure Luau image codecs for a growing range of formats.  
+It provides a uniform interface for decoding & encoding.
 
-- Fully type-safe, optimized using modern techniques for maximum performance
-- Lightweight, self-contained implementations with zero dependencies
-- Seamlessly compatible with Roblox, Lune, and other Luau runtimes
-- Architected to easily scale and support new formats over time
+- Type-safe, carefully optimized for speed and memory efficiency
+- Lightweight implementations with zero dependencies
+- Compatible with Roblox, Lune, and other Luau runtimes
+- Structured from the ground up to accommodate new formats
 
 > [!WARNING]
-> Picguin is in early development, and the public API across codecs is subject to change.  
-> All packages will remain pre-v1.0.0 until a stable design is in place.
+> **Picguin is in early development**, and the interface across codecs is subject to change.  
+> All packages will remain pre-v1.0.0 until the design is finalized.
 
 ## Get Started
 
 [**View the documentation**](https://wizevaxel.github.io/picguin/guide/introduction) to get started with Picguin.
 
-**Simplified happy-path usage example (PNG):**
+**Simplified happy-path usage (PNG):**
 
 ```luau
 local png = require("@packages/png")
@@ -43,9 +43,9 @@ local cel = parsed.cel(0, "rgba8") -- decode frame 0 bitmap, region, duration, e
 
 ## Codecs
 
-View [Introduction, **Installation**](https://wizevaxel.github.io/picguin/guide/introduction#installation) for a quick installation guide.
+See [Introduction, **Installation**](https://wizevaxel.github.io/picguin/guide/introduction#installation) for an installation guide.
 
 <!-- prettier-ignore -->
-| Format   | [pesde](https://pesde.dev/search?q=picguin) Package | `.rbxm` Releases |
-| -------- | -------------- | - |
-| **PNG**  | `picguin/png`  | [**Latest** (**v0.1.1**)](https://github.com/wizevaxel/picguin/releases/png@v0.1.1) <br> [All Releases](https://github.com/wizevaxel/picguin/releases?q=png%40) |
+| Format | [pesde](https://pesde.dev/search?q=picguin) Package | `.rbxm` Releases |
+| - | - | - |
+| [**PNG**](https://wizevaxel.github.io/picguin/guide/png/) | `picguin/png` | [**Latest** (**v0.1.1**)](https://github.com/wizevaxel/picguin/releases/png@v0.1.1) <br> [All Releases](https://github.com/wizevaxel/picguin/releases?q=png%40) |

@@ -1,12 +1,12 @@
 # Introduction
 
-Picguin is a collection of fast, pure Luau image codecs for a growing range of formats.  
-It provides a standardized interface for straightforward decoding & encoding.
+**Picguin** is a collection of pure Luau image codecs for a growing range of formats.  
+It provides a uniform interface for decoding & encoding.
 
-- Fully type-safe, optimized using modern techniques for maximum performance
-- Lightweight, self-contained implementations with zero dependencies
-- Seamlessly compatible with Roblox, Lune, and other Luau runtimes
-- Architected to easily scale and support new formats over time
+- Type-safe, carefully optimized for speed and memory efficiency
+- Lightweight implementations with zero dependencies
+- Compatible with Roblox, Lune, and other Luau runtimes
+- Structured from the ground up to accommodate new formats
 
 ## Installation
 
@@ -16,8 +16,7 @@ Picguin codecs can be individually installed using the following methods:
 
 === Using pesde (package manager)
 
-Each codec is published under the `picguin/` scope in the pesde index.
-
+Each codec is published under the `picguin/` scope in the pesde index.  
 Install [pesde](https://docs.pesde.dev/), and run the following commands in your project:
 
 ```bash
@@ -39,7 +38,7 @@ View the list under [README, **Codecs**](https://github.com/wizevaxel/picguin/bl
 
 ## Example Usage
 
-Below is a typical workflow using the [PNG](./png/) codec to decode a static image:
+Below is typical usage of the [PNG](./png/) codec to decode a static image:
 
 ```luau
 local png = require("@packages/png")
@@ -54,7 +53,7 @@ if parsed == nil then
 	error(`parse error ({err.code}): {err.message}`)
 end
 
-local width, height = parsed.width, parsed.height
+print(`parsed {parsed.width}x{parsed.height} image`)
 
 local cel, err = parsed.cel(0, "rgba8") -- frame 0 -> rgba8 bitmap (default)
 if cel == nil then
@@ -65,6 +64,8 @@ image:write(cel.bitmap, cel.region.size, cel.region.position)
 ```
 
 ::: warning
-Picguin is in early development, and the public API across codecs is subject to change.  
-All packages will remain pre-v1.0.0 until a stable design is in place.
+
+**Picguin is in early development**, and the interface across codecs is subject to change.  
+All packages will remain pre-v1.0.0 until the design is finalized.
+
 :::
