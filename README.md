@@ -8,6 +8,7 @@
 <div align="center">
 
 [![docs](https://badgen.net/badge/picguin/docs?label=&color=f0546e&labelColor=cc4053&icon=gitbook)](https://wizevaxel.github.io/picguin/)
+[![forum](https://badgen.net/badge/picguin/forum?label=&color=5b92d6&labelColor=4e7fbb&icon=roblox-studio)](https://devforum.roblox.com/t/4667402)
 [![license](https://badgen.net/static/license/MIT?color=56c46a&labelColor=47a162)](https://github.com/wizevaxel/picguin/blob/main/LICENSE)
 
 </div>
