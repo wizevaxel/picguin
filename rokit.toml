@@ -2,3 +2,4 @@
 luau-lsp = "JohnnyMorganz/luau-lsp@1.69.0"
 lune = "lune-org/lune@0.10.5"
 rojo = "rojo-rbx/rojo@7.7.0"
+zune = "Scythe-Technology/zune@0.5.7"

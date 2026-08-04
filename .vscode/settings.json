@@ -1,4 +1,12 @@
 {
 	"luau-lsp.fflags.enableNewSolver": true,
-	"luau-lsp.platform.type": "standard"
+	"luau-lsp.platform.type": "standard",
+	"luau-lsp.sourcemap.enabled": false,
+
+	"luau-lsp.types.definitionFiles": {
+		"zune": ".typedefs/zune/zune.d.luau"
+	},
+	"luau-lsp.types.documentationFiles": [
+		".typedefs/zune/zune.d.json"
+	]
 }
