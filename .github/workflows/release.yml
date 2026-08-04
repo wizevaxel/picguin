@@ -31,10 +31,15 @@ jobs:
       - name: Setup pesde workspace
         run: pesde install
 
-      - name: Build and release
-        run: lune run scripts/release ${{ inputs.codec }}
+      - name: Build release
+        run: zune run scripts/build ${{ inputs.codec }}
 
-      - name: Create Release
+      - name: Publish targets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: zune run scripts/publish ${{ inputs.codec }}
+
+      - name: Create release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release create "${{ env.RELEASE_TAG }}" "release/${{ inputs.codec }}.rbxm" --title "${{ env.RELEASE_TAG }}" --draft
