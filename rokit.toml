@@ -1,4 +1,4 @@
 [tools]
-luau-lsp = "JohnnyMorganz/luau-lsp@1.68.0"
-lune = "lune-org/lune@0.10.4"
-rojo = "rojo-rbx/rojo@7.6.1"
+luau-lsp = "JohnnyMorganz/luau-lsp@1.69.0"
+lune = "lune-org/lune@0.10.5"
+rojo = "rojo-rbx/rojo@7.7.0"
