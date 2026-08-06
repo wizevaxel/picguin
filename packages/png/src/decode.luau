@@ -70,6 +70,9 @@ type DecodeContext = {
 
 	crc: ("all" | "critical" | "none"),
 
+	frames: {FrameContext},
+	frame: FrameContext | false,
+
 	spans: {[types.Chunk]: SourceSpans},
 	parsed: Parsed,
 }
@@ -124,6 +127,16 @@ local COLOR_TYPE_MAP: {[number]: {color_space: types.ColorSpace, channels: numbe
 	[3] = {color_space = "indexed", channels = 1, bit_depths =  map {1, 2, 4, 8}},
 	[4] = {color_space = "grayscale", channels = 2, bit_depths = map {8, 16}},
 	[6] = {color_space = "truecolor", channels = 4, bit_depths = map {8, 16}},
+}
+
+local DISPOSE_OP_MAP: {[number]: types.DisposeOperation} = {
+	[0] = "none",
+	[1] = "background",
+	[2] = "previous",
+}
+local BLEND_OP_MAP: {[number]: types.BlendOperation} = {
+	[0] = "source",
+	[1] = "over",
 }
 
 local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> DecodeError?} = {
@@ -223,6 +236,95 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 			for index = 1, count do
 				palette[index] = palette[index] % 0x1000000 + buffer.readu8(source, offset + index) * 0x1000000
 			end
+		end
+
+		return nil
+	end,
+	["acTL"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+		if chunk_length ~= 8 then
+			return decode_error("invalid_length", `invalid acTL chunk length: expected 8 bytes, got {chunk_length}`)
+		end
+
+		context.parsed.frames = bit32.byteswap(buffer.readu32(context.source, chunk_offset))
+		context.parsed.plays = bit32.byteswap(buffer.readu32(context.source, chunk_offset + 4))
+
+		return nil
+	end,
+	["fcTL"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+		if chunk_length ~= 26 then
+			return decode_error("invalid_length", `invalid fcTL chunk length: expected 26 bytes, got {chunk_length}`)
+		end
+
+		local source = context.source
+
+		local width = bit32.byteswap(buffer.readu32(source, chunk_offset + 4))
+		local height = bit32.byteswap(buffer.readu32(source, chunk_offset + 8))
+		if width == 0 or height == 0 then
+			return decode_error("invalid_header", `invalid image dimensions: {width}x{height}`)
+		end
+
+		local x = bit32.byteswap(buffer.readu32(source, chunk_offset + 12))
+		local y = bit32.byteswap(buffer.readu32(source, chunk_offset + 16))
+
+		local dispose_op = buffer.readu8(source, chunk_offset + 24)
+		local dispose = DISPOSE_OP_MAP[dispose_op]
+		if not dispose then
+			return decode_error("invalid_header", `invalid dispose_op: {dispose_op}`)
+		end
+
+		local blend_op = buffer.readu8(source, chunk_offset + 25)
+		local blend = BLEND_OP_MAP[blend_op]
+		if not blend then
+			return decode_error("invalid_header", `invalid blend_op: {blend_op}`)
+		end
+
+		local delay_num = bit32.byteswap(buffer.readu16(source, chunk_offset + 20) * 0x10000)
+		local delay_den = bit32.byteswap(buffer.readu16(source, chunk_offset + 22) * 0x10000)
+
+		local frame: FrameContext = {
+			width = width,
+			height = height,
+			x = x,
+			y = y,
+
+			dispose = dispose,
+			blend = blend,
+			duration = delay_num / (delay_den == 0 and 100 or delay_den),
+
+			spans = {},
+		}
+		table.insert(context.frames, frame)
+		context.frame = frame
+
+		return nil
+	end,
+	["IDAT"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+
+		if context.frame then
+			local spans = context.frame.spans
+			table.insert(spans, chunk_offset)
+			table.insert(spans, chunk_length)
+		end
+
+		return nil
+	end,
+	["fdAT"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+		if chunk_length < 4 then
+			return decode_error("invalid_length", `invalid fdAT chunk length: expected less than 4 bytes, got {chunk_length}`)
+		end
+
+		local frame = context.frame
+		if frame then
+			table.insert(frame.spans, chunk_offset + 4)
+			table.insert(frame.spans, chunk_length - 4)
 		end
 
 		return nil
