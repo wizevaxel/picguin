@@ -749,13 +749,13 @@ local function parse_png(context: DecodeContext): DecodeError?
 
 		local active = context.frames[frame] or context.frames[0]
 
-		local concatenated = concatenate_spans(source, spans["IDAT"])
+		local concatenated = concatenate_spans(source, active.spans)
 		local decompressed, err_decompress = zlib.decompress(concatenated, active.out_size + active.height)
 		if not decompressed then
 			return nil, err_decompress :: CelError
 		end
 
-		local unfiltered, err_unfilter = unfilter(context, decompressed)
+		local unfiltered, err_unfilter = unfilter(context, active, decompressed)
 		if not unfiltered then
 			return nil, err_unfilter
 		end
