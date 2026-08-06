@@ -197,6 +197,20 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		headers.bit_depth = bit_depth
 		headers.channels = channels
 
+		local frame: FrameContext = {
+			width = parsed.width,
+			height = parsed.height,
+			x = 0,
+			y = 0,
+
+			dispose = "none",
+			blend = "source",
+			duration = 0,
+
+			spans = context.spans["IDAT"],
+		}
+		context.frames[0] = frame
+
 		return nil
 	end,
 	["PLTE"] = function(context, chunk_spans, spans_index)
