@@ -28,22 +28,11 @@ export type DecodeOptions = {
 	crc: ("all" | "critical" | "none")?,
 }
 
-type DecodeContext = {
-	source: buffer,
-	length: number,
-
-	crc: ("all" | "critical" | "none"),
-
-	spans: {[types.Chunk]: SourceSpans},
-	parsed: Parsed,
-}
-
-type SourceSpans = {number}
-
 export type Parsed = {
 	width: number,
 	height: number,
 	frames: number,
+	plays: number,
 	alpha: boolean,
 
 	headers: {
@@ -57,20 +46,48 @@ export type Parsed = {
 	cel: (frame: number?, target: ColorTarget?) -> (Cel?, CelError),
 }
 
-export type ColorTarget =
-	| "rgba8"
-	| "rgba16"
-
 export type Cel = {
 	bitmap: buffer,
 	region: BitmapRegion,
 	duration: number,
+
+	dispose: types.DisposeOperation,
+	blend: types.BlendOperation,
 }
+
+export type ColorTarget =
+	| "rgba8"
+	| "rgba16"
 
 export type BitmapRegion = {
 	size: vector,
 	position: vector,
 }
+
+type DecodeContext = {
+	source: buffer,
+	length: number,
+
+	crc: ("all" | "critical" | "none"),
+
+	spans: {[types.Chunk]: SourceSpans},
+	parsed: Parsed,
+}
+
+type FrameContext = {
+	width: number,
+	height: number,
+	x: number,
+	y: number,
+
+	dispose: types.DisposeOperation,
+	blend: types.BlendOperation,
+	duration: number,
+
+	spans: SourceSpans,
+}
+
+type SourceSpans = {number}
 
 local function map<T>(t: {T}): {[T]: true}
 	local out: {[T]: true} = {}
