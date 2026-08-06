@@ -126,10 +126,10 @@ local COLOR_TYPE_MAP: {[number]: {color_space: types.ColorSpace, channels: numbe
 	[6] = {color_space = "truecolor", channels = 4, bit_depths = map {8, 16}},
 }
 
-local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?} = {
-	["IHDR"] = function(context, chunk_spans)
-		local chunk_offset = chunk_spans[1]
-		local chunk_length = chunk_spans[2]
+local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> DecodeError?} = {
+	["IHDR"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
 		if chunk_length ~= 13 then
 			return decode_error("invalid_length", `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`)
 		end
@@ -186,9 +186,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["PLTE"] = function(context, chunk_spans)
-		local chunk_offset = chunk_spans[1]
-		local chunk_length = chunk_spans[2]
+	["PLTE"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
 		if chunk_length < 3 or chunk_length > 768 then
 			return decode_error("invalid_length", `invalid PLTE chunk length: expected 3-768 bytes, got {chunk_length}`)
 		elseif chunk_length % 3 ~= 0 then
@@ -207,9 +207,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["tRNS"] = function(context, chunk_spans)
-		local chunk_offset = chunk_spans[1]
-		local chunk_length = chunk_spans[2]
+	["tRNS"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
 
 		local source = context.source
 		local parsed = context.parsed
@@ -227,7 +227,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["IEND"] = function(context, chunk_spans)
+	["IEND"] = function(context, chunk_spans, spans_index)
 		if not context.spans["IDAT"] then
 			return decode_error("missing_chunk", "missing IDAT chunk")
 		end
@@ -540,8 +540,6 @@ local function parse_png(context: DecodeContext): DecodeError?
 
 	local parsed = context.parsed
 	local crc_mode = context.crc
-
-	local order: {types.Chunk} = {}
 	local spans = context.spans
 
 	while true do
@@ -575,21 +573,19 @@ local function parse_png(context: DecodeContext): DecodeError?
 			spans[chunk_type] = chunk_spans
 		end
 
+		local spans_index = #chunk_spans + 1
 		table.insert(chunk_spans, offset)
 		table.insert(chunk_spans, chunk_length)
-		table.insert(order, chunk_type)
+
+		local parser = CHUNK_PARSER[chunk_type]
+		if parser then
+			local err = parser(context, chunk_spans, spans_index)
+			if err then return err end
+		end
 
 		offset += chunk_length + 4
 
 		if chunk_type == "IEND" then break end
-	end
-
-	for _, chunk_type in order do
-		local parser = CHUNK_PARSER[chunk_type]
-		if parser then
-			local err = parser(context, spans[chunk_type])
-			if err then return err end
-		end
 	end
 
 	local row_width = parsed.width * parsed.headers.channels * parsed.headers.bit_depth + 7
