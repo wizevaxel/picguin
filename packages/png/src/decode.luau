@@ -87,6 +87,8 @@ type FrameContext = {
 	blend: types.BlendOperation,
 	duration: number,
 
+	row_size: number,
+	out_size: number,
 	spans: SourceSpans,
 }
 
@@ -164,6 +166,16 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 			return decode_error("invalid_header", `invalid bit depth: {bit_depth}`)
 		end
 
+		local alpha = color_type > 3
+		local color_space = color_info.color_space
+		local channels = color_info.channels
+
+		local row_size = (width * bit_depth * channels + 7) // 8
+		local out_size = height * row_size
+		if out_size + height > MAX_BUFFER_SIZE then
+			return decode_error("overflow", "predetermined decompressed output too large")
+		end
+
 		local compression = buffer.readu8(source, chunk_offset + 10)
 		if compression > 0 then
 			return decode_error("unsupported", `unsupported compression method: {compression}`)
@@ -180,10 +192,6 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		elseif interlacing == 1 then
 			return decode_error("unsupported", "interlacing is unsupported")
 		end
-
-		local alpha = color_type > 3
-		local color_space = color_info.color_space
-		local channels = color_info.channels
 
 		local parsed = context.parsed
 		parsed.width = width
@@ -207,6 +215,8 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 			blend = "source",
 			duration = 0,
 
+			row_size = row_size,
+			out_size = out_size,
 			spans = context.spans["IDAT"],
 		}
 		context.frames[0] = frame
@@ -274,6 +284,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		end
 
 		local source = context.source
+		local headers = context.parsed.headers
 
 		local width = bit32.byteswap(buffer.readu32(source, chunk_offset + 4))
 		local height = bit32.byteswap(buffer.readu32(source, chunk_offset + 8))
@@ -299,6 +310,12 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		local delay_num = bit32.byteswap(buffer.readu16(source, chunk_offset + 20) * 0x10000)
 		local delay_den = bit32.byteswap(buffer.readu16(source, chunk_offset + 22) * 0x10000)
 
+		local row_size = (width * headers.bit_depth * headers.channels + 7) // 8
+		local out_size = height * row_size
+		if out_size + height > MAX_BUFFER_SIZE then
+			return decode_error("overflow", `frame {#context.frames + 1} predetermined decompressed output too large`)
+		end
+
 		local frame: FrameContext = {
 			width = width,
 			height = height,
@@ -309,6 +326,8 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 			blend = blend,
 			duration = delay_num / (delay_den == 0 and 100 or delay_den),
 
+			row_size = row_size,
+			out_size = out_size,
 			spans = {},
 		}
 		table.insert(context.frames, frame)
@@ -702,12 +721,6 @@ local function parse_png(context: DecodeContext): DecodeError?
 		offset += chunk_length + 4
 
 		if chunk_type == "IEND" then break end
-	end
-
-	local row_width = parsed.width * parsed.headers.channels * parsed.headers.bit_depth + 7
-	local out_size = parsed.height * (row_width + 1)
-	if out_size > MAX_BUFFER_SIZE then
-		return decode_error("overflow", "predetermined decompressed output too large")
 	end
 
 	parsed.cel = function(frame: number?, target: ColorTarget?): (Cel?, CelError)
