@@ -406,15 +406,24 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 
 		if bit_depth == 16 then
 			if channels == 4 then
-				buffer.copy(out, 0, data, 0, length)
+				local cursor = 0
+				for offset = 0, length - 1, 4 do
+					local value0 = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+						+ bit32.byteswap(buffer.readu16(data, offset + 2))
+					local value1 = bit32.byteswap(buffer.readu16(data, offset + 4))
+						+ bit32.byteswap(buffer.readu16(data, offset + 6))
+					buffer.writeu32(out, cursor, value0)
+					buffer.writeu32(out, cursor + 4, value1 + bit32.byteswap(buffer.readu16(data, offset + 2)))
+					cursor += 8
+				end
 			else
 				local cursor = 0
 				for offset = 0, length - 1, 6 do
-					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					local value0 = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
 						+ bit32.byteswap(buffer.readu16(data, offset + 2))
-						+ bit32.byteswap(buffer.readu16(data, offset + 4)) * 0x10000
-					buffer.writeu32(out, cursor, value % 0x100000000)
-					buffer.writeu32(out, cursor + 4, value // 0x100000000 + (value == transparency and 0 or 0xFFFF0000))
+					local value1 = bit32.byteswap(buffer.readu16(data, offset + 4))
+					buffer.writeu32(out, cursor, value0)
+					buffer.writeu32(out, cursor + 4, value1 + (value0 + value1 == transparency and 0 or 0xFFFF0000))
 					cursor += 8
 				end
 			end
@@ -577,11 +586,10 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, FrameContext, buffer) -> b
 	end,
 }
 
-local function unfilter(context: DecodeContext, data: buffer): (buffer?, CelError)
+local function unfilter(context: DecodeContext, frame: FrameContext, data: buffer): (buffer?, CelError)
 	local parsed = context.parsed
 	local headers = parsed.headers
 
-	local frame = assert(context.frame)
 	local row_size = frame.row_size
 	local bpp = (headers.bit_depth * headers.channels + 7) // 8
 
