@@ -217,9 +217,10 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 
 			row_size = row_size,
 			out_size = out_size,
-			spans = context.spans["IDAT"],
+			spans = {},
 		}
 		context.frames[0] = frame
+		context.frame = frame
 
 		return nil
 	end,
@@ -339,10 +340,10 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		local chunk_offset = chunk_spans[spans_index]
 		local chunk_length = chunk_spans[spans_index + 1]
 
-		if context.frame then
-			local spans = context.frame.spans
-			table.insert(spans, chunk_offset)
-			table.insert(spans, chunk_length)
+		local frame = context.frame
+		if frame then
+			table.insert(frame.spans, chunk_offset)
+			table.insert(frame.spans, chunk_length)
 		end
 
 		return nil
