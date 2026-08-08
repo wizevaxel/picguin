@@ -11,6 +11,9 @@ export type Error<Code> = {
 
 export type ColorSpace = "truecolor" | "grayscale" | "indexed"
 
+export type DisposeOperation = "none" | "background" | "previous"
+export type BlendOperation = "source" | "over"
+
 export type CriticalChunk =
 	| "IHDR" | "PLTE" | "IDAT" | "IEND"
 export type AncillaryChunk =

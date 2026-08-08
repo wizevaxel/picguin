@@ -28,22 +28,11 @@ export type DecodeOptions = {
 	crc: ("all" | "critical" | "none")?,
 }
 
-type DecodeContext = {
-	source: buffer,
-	length: number,
-
-	crc: ("all" | "critical" | "none"),
-
-	spans: {[types.Chunk]: SourceSpans},
-	parsed: Parsed,
-}
-
-type SourceSpans = {number}
-
 export type Parsed = {
 	width: number,
 	height: number,
 	frames: number,
+	plays: number,
 	alpha: boolean,
 
 	headers: {
@@ -57,20 +46,53 @@ export type Parsed = {
 	cel: (frame: number?, target: ColorTarget?) -> (Cel?, CelError),
 }
 
-export type ColorTarget =
-	| "rgba8"
-	| "rgba16"
-
 export type Cel = {
 	bitmap: buffer,
 	region: BitmapRegion,
 	duration: number,
+
+	dispose: types.DisposeOperation,
+	blend: types.BlendOperation,
 }
+
+export type ColorTarget =
+	| "rgba8"
+	| "rgba16"
 
 export type BitmapRegion = {
 	size: vector,
 	position: vector,
 }
+
+type DecodeContext = {
+	source: buffer,
+	length: number,
+
+	crc: ("all" | "critical" | "none"),
+
+	frames: {FrameContext},
+	frame: FrameContext | false,
+
+	spans: {[types.Chunk]: SourceSpans},
+	parsed: Parsed,
+}
+
+type FrameContext = {
+	width: number,
+	height: number,
+	x: number,
+	y: number,
+
+	dispose: types.DisposeOperation,
+	blend: types.BlendOperation,
+	duration: number,
+
+	row_size: number,
+	out_size: number,
+	spans: SourceSpans,
+}
+
+type SourceSpans = {number}
 
 local function map<T>(t: {T}): {[T]: true}
 	local out: {[T]: true} = {}
@@ -109,10 +131,20 @@ local COLOR_TYPE_MAP: {[number]: {color_space: types.ColorSpace, channels: numbe
 	[6] = {color_space = "truecolor", channels = 4, bit_depths = map {8, 16}},
 }
 
-local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?} = {
-	["IHDR"] = function(context, chunk_spans)
-		local chunk_offset = chunk_spans[1]
-		local chunk_length = chunk_spans[2]
+local DISPOSE_OP_MAP: {[number]: types.DisposeOperation} = {
+	[0] = "none",
+	[1] = "background",
+	[2] = "previous",
+}
+local BLEND_OP_MAP: {[number]: types.BlendOperation} = {
+	[0] = "source",
+	[1] = "over",
+}
+
+local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> DecodeError?} = {
+	["IHDR"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
 		if chunk_length ~= 13 then
 			return decode_error("invalid_length", `invalid IHDR chunk length: expected 13 bytes, got {chunk_length}`)
 		end
@@ -134,6 +166,16 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 			return decode_error("invalid_header", `invalid bit depth: {bit_depth}`)
 		end
 
+		local alpha = color_type > 3
+		local color_space = color_info.color_space
+		local channels = color_info.channels
+
+		local row_size = (width * bit_depth * channels + 7) // 8
+		local out_size = height * row_size
+		if out_size + height > MAX_BUFFER_SIZE then
+			return decode_error("overflow", "predetermined decompressed output too large")
+		end
+
 		local compression = buffer.readu8(source, chunk_offset + 10)
 		if compression > 0 then
 			return decode_error("unsupported", `unsupported compression method: {compression}`)
@@ -151,14 +193,10 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 			return decode_error("unsupported", "interlacing is unsupported")
 		end
 
-		local alpha = color_type > 3
-		local color_space = color_info.color_space
-		local channels = color_info.channels
-
 		local parsed = context.parsed
 		parsed.width = width
 		parsed.height = height
-		parsed.frames = 0
+		parsed.frames = 1
 		parsed.alpha = alpha
 
 		local headers = parsed.headers
@@ -167,11 +205,40 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 		headers.bit_depth = bit_depth
 		headers.channels = channels
 
+		local frame: FrameContext = {
+			width = parsed.width,
+			height = parsed.height,
+			x = 0,
+			y = 0,
+
+			dispose = "none",
+			blend = "source",
+			duration = 0,
+
+			row_size = row_size,
+			out_size = out_size,
+			spans = {},
+		}
+		context.frames[0] = frame
+		context.frame = frame
+
 		return nil
 	end,
-	["PLTE"] = function(context, chunk_spans)
-		local chunk_offset = chunk_spans[1]
-		local chunk_length = chunk_spans[2]
+	["acTL"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+		if chunk_length ~= 8 then
+			return decode_error("invalid_length", `invalid acTL chunk length: expected 8 bytes, got {chunk_length}`)
+		end
+
+		context.parsed.frames = bit32.byteswap(buffer.readu32(context.source, chunk_offset))
+		context.parsed.plays = bit32.byteswap(buffer.readu32(context.source, chunk_offset + 4))
+
+		return nil
+	end,
+	["PLTE"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
 		if chunk_length < 3 or chunk_length > 768 then
 			return decode_error("invalid_length", `invalid PLTE chunk length: expected 3-768 bytes, got {chunk_length}`)
 		elseif chunk_length % 3 ~= 0 then
@@ -190,9 +257,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["tRNS"] = function(context, chunk_spans)
-		local chunk_offset = chunk_spans[1]
-		local chunk_length = chunk_spans[2]
+	["tRNS"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
 
 		local source = context.source
 		local parsed = context.parsed
@@ -210,7 +277,93 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 
 		return nil
 	end,
-	["IEND"] = function(context, chunk_spans)
+	["fcTL"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+		if chunk_length ~= 26 then
+			return decode_error("invalid_length", `invalid fcTL chunk length: expected 26 bytes, got {chunk_length}`)
+		end
+
+		local source = context.source
+		local headers = context.parsed.headers
+
+		local width = bit32.byteswap(buffer.readu32(source, chunk_offset + 4))
+		local height = bit32.byteswap(buffer.readu32(source, chunk_offset + 8))
+		if width == 0 or height == 0 then
+			return decode_error("invalid_header", `invalid image dimensions: {width}x{height}`)
+		end
+
+		local x = bit32.byteswap(buffer.readu32(source, chunk_offset + 12))
+		local y = bit32.byteswap(buffer.readu32(source, chunk_offset + 16))
+
+		local dispose_op = buffer.readu8(source, chunk_offset + 24)
+		local dispose = DISPOSE_OP_MAP[dispose_op]
+		if not dispose then
+			return decode_error("invalid_header", `invalid dispose_op: {dispose_op}`)
+		end
+
+		local blend_op = buffer.readu8(source, chunk_offset + 25)
+		local blend = BLEND_OP_MAP[blend_op]
+		if not blend then
+			return decode_error("invalid_header", `invalid blend_op: {blend_op}`)
+		end
+
+		local delay_num = bit32.byteswap(buffer.readu16(source, chunk_offset + 20) * 0x10000)
+		local delay_den = bit32.byteswap(buffer.readu16(source, chunk_offset + 22) * 0x10000)
+
+		local row_size = (width * headers.bit_depth * headers.channels + 7) // 8
+		local out_size = height * row_size
+		if out_size + height > MAX_BUFFER_SIZE then
+			return decode_error("overflow", `frame {#context.frames + 1} predetermined decompressed output too large`)
+		end
+
+		local frame: FrameContext = {
+			width = width,
+			height = height,
+			x = x,
+			y = y,
+
+			dispose = dispose,
+			blend = blend,
+			duration = delay_num / (delay_den == 0 and 100 or delay_den),
+
+			row_size = row_size,
+			out_size = out_size,
+			spans = {},
+		}
+		table.insert(context.frames, frame)
+		context.frame = frame
+
+		return nil
+	end,
+	["IDAT"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+
+		local frame = context.frame
+		if frame then
+			table.insert(frame.spans, chunk_offset)
+			table.insert(frame.spans, chunk_length)
+		end
+
+		return nil
+	end,
+	["fdAT"] = function(context, chunk_spans, spans_index)
+		local chunk_offset = chunk_spans[spans_index]
+		local chunk_length = chunk_spans[spans_index + 1]
+		if chunk_length < 4 then
+			return decode_error("invalid_length", `invalid fdAT chunk length: expected less than 4 bytes, got {chunk_length}`)
+		end
+
+		local frame = context.frame
+		if frame then
+			table.insert(frame.spans, chunk_offset + 4)
+			table.insert(frame.spans, chunk_length - 4)
+		end
+
+		return nil
+	end,
+	["IEND"] = function(context, chunk_spans, spans_index)
 		if not context.spans["IDAT"] then
 			return decode_error("missing_chunk", "missing IDAT chunk")
 		end
@@ -219,12 +372,14 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans) -> DecodeError?
 			return decode_error("missing_chunk", "missing PLTE chunk with indexed color type")
 		end
 
+		context.frame = false
+
 		return nil
 	end,
 }
 
-local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
-	["truecolor"] = function(context, data)
+local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) -> buffer} = {
+	["truecolor"] = function(context, frame, data)
 		local length = buffer.len(data)
 		local parsed = context.parsed
 		local headers = parsed.headers
@@ -248,19 +403,28 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 			end
 		end
 
-		local out = buffer.create(parsed.width * parsed.height * (bit_depth == 16 and 2 or 1) * 4)
+		local out = buffer.create(frame.width * frame.height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
 			if channels == 4 then
-				buffer.copy(out, 0, data, 0, length)
+				local cursor = 0
+				for offset = 0, length - 1, 4 do
+					local value0 = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+						+ bit32.byteswap(buffer.readu16(data, offset + 2))
+					local value1 = bit32.byteswap(buffer.readu16(data, offset + 4))
+						+ bit32.byteswap(buffer.readu16(data, offset + 6))
+					buffer.writeu32(out, cursor, value0)
+					buffer.writeu32(out, cursor + 4, value1 + bit32.byteswap(buffer.readu16(data, offset + 2)))
+					cursor += 8
+				end
 			else
 				local cursor = 0
 				for offset = 0, length - 1, 6 do
-					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					local value0 = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
 						+ bit32.byteswap(buffer.readu16(data, offset + 2))
-						+ bit32.byteswap(buffer.readu16(data, offset + 4)) * 0x10000
-					buffer.writeu32(out, cursor, value % 0x100000000)
-					buffer.writeu32(out, cursor + 4, value // 0x100000000 + (value == transparency and 0 or 0xFFFF0000))
+					local value1 = bit32.byteswap(buffer.readu16(data, offset + 4))
+					buffer.writeu32(out, cursor, value0)
+					buffer.writeu32(out, cursor + 4, value1 + (value0 + value1 == transparency and 0 or 0xFFFF0000))
 					cursor += 8
 				end
 			end
@@ -279,7 +443,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 
 		return out
 	end,
-	["grayscale"] = function(context, data)
+	["grayscale"] = function(context, frame, data)
 		local length = buffer.len(data)
 		local parsed = context.parsed
 		local headers = parsed.headers
@@ -299,7 +463,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 			end
 		end
 
-		local out = buffer.create(parsed.width * parsed.height * (bit_depth == 16 and 2 or 1) * 4)
+		local out = buffer.create(frame.width * frame.height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
 			if channels == 2 then
@@ -308,7 +472,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
 					buffer.writeu32(out, cursor, value + value * 0x10000)
 					buffer.writeu32(out, cursor + 4, value + bit32.byteswap(buffer.readu16(data, offset + 2)))
-					cursor += 4
+					cursor += 8
 				end
 			else
 				local cursor = 0
@@ -316,7 +480,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
 					buffer.writeu32(out, cursor, value + value * 0x10000)
 					buffer.writeu32(out, cursor + 4, value + (value == transparency and 0 or 0xFFFF0000))
-					cursor += 4
+					cursor += 8
 				end
 			end
 		elseif bit_depth == 8 then
@@ -351,7 +515,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 
 		return out
 	end,
-	["indexed"] = function(context, data)
+	["indexed"] = function(context, frame, data)
 		local length = buffer.len(data)
 		local parsed = context.parsed
 		local headers = parsed.headers
@@ -359,7 +523,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 		local palette = assert(parsed.palette)
 		local bit_depth = headers.bit_depth
 
-		local out = buffer.create(parsed.width * parsed.height * 4)
+		local out = buffer.create(frame.width * frame.height * 4)
 
 		if bit_depth == 8 then
 			local cursor = 0
@@ -383,12 +547,12 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, buffer) -> buffer} = {
 	end,
 }
 
-local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
-	["rgba8"] = function(context, data)
+local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, FrameContext, buffer) -> buffer} = {
+	["rgba8"] = function(context, frame, data)
 		local parsed = context.parsed
 		if parsed.headers.bit_depth < 16 then return data end
 
-		local out = buffer.create(parsed.width * parsed.height * 4)
+		local out = buffer.create(frame.width * frame.height * 4)
 
 		local cursor = 0
 		for offset = 0, buffer.len(data) - 1, 8 do
@@ -402,11 +566,11 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
 
 		return out
 	end,
-	["rgba16"] = function(context, data)
+	["rgba16"] = function(context, frame, data)
 		local parsed = context.parsed
 		if parsed.headers.bit_depth == 16 then return data end
 
-		local out = buffer.create(parsed.width * parsed.height * 2 * 4)
+		local out = buffer.create(frame.width * frame.height * 2 * 4)
 
 		local cursor = 0
 		for offset = 0, buffer.len(data) - 1, 4 do
@@ -423,27 +587,28 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, buffer) -> buffer} = {
 	end,
 }
 
-local function unfilter(parsed: Parsed, data: buffer): (buffer?, CelError)
+local function unfilter(context: DecodeContext, frame: FrameContext, data: buffer): (buffer?, CelError)
+	local parsed = context.parsed
 	local headers = parsed.headers
 
+	local row_size = frame.row_size
 	local bpp = (headers.bit_depth * headers.channels + 7) // 8
-	local row_width = (parsed.width * headers.bit_depth * headers.channels + 7) // 8
 
-	local out = buffer.create(parsed.height * row_width)
+	local out = buffer.create(frame.out_size)
 
 	local offset = 0
 	local cursor = 0
 
-	for y = 1, parsed.height do
+	for y = 1, frame.height do
 		local filter = buffer.readu8(data, offset)
 		offset += 1
 
 		if filter == 0 or (filter == 2 and y == 1) then
-			buffer.copy(out, cursor, data, offset, row_width)
-			offset += row_width
-			cursor += row_width
+			buffer.copy(out, cursor, data, offset, row_size)
+			offset += row_size
+			cursor += row_size
 		elseif filter == 1 then
-			for x = 1, row_width do
+			for x = 1, row_size do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
 				local value = buffer.readu8(data, offset) + a
 				buffer.writeu8(out, cursor, value % 0x100)
@@ -451,27 +616,27 @@ local function unfilter(parsed: Parsed, data: buffer): (buffer?, CelError)
 				cursor += 1
 			end
 		elseif filter == 2 then
-			for _ = 1, row_width do
-				local b = buffer.readu8(out, cursor - row_width)
+			for _ = 1, row_size do
+				local b = buffer.readu8(out, cursor - row_size)
 				local value = buffer.readu8(data, offset) + b
 				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
 		elseif filter == 3 then
-			for x = 1, row_width do
+			for x = 1, row_size do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
-				local b = y > 1 and buffer.readu8(out, cursor - row_width) or 0
+				local b = y > 1 and buffer.readu8(out, cursor - row_size) or 0
 				local value = buffer.readu8(data, offset) + (a + b) // 2
 				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
 		elseif filter == 4 then
-			for x = 1, row_width do
+			for x = 1, row_size do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
-				local b = y > 1 and buffer.readu8(out, cursor - row_width) or 0
-				local c = (y > 1 and x > bpp) and buffer.readu8(out, cursor - row_width - bpp) or 0
+				local b = y > 1 and buffer.readu8(out, cursor - row_size) or 0
+				local c = (y > 1 and x > bpp) and buffer.readu8(out, cursor - row_size - bpp) or 0
 				local p = a + b - c
 				local pa = math.abs(p - a)
 				local pb = math.abs(p - b)
@@ -523,8 +688,6 @@ local function parse_png(context: DecodeContext): DecodeError?
 
 	local parsed = context.parsed
 	local crc_mode = context.crc
-
-	local order: {types.Chunk} = {}
 	local spans = context.spans
 
 	while true do
@@ -558,27 +721,19 @@ local function parse_png(context: DecodeContext): DecodeError?
 			spans[chunk_type] = chunk_spans
 		end
 
+		local spans_index = #chunk_spans + 1
 		table.insert(chunk_spans, offset)
 		table.insert(chunk_spans, chunk_length)
-		table.insert(order, chunk_type)
+
+		local parser = CHUNK_PARSER[chunk_type]
+		if parser then
+			local err = parser(context, chunk_spans, spans_index)
+			if err then return err end
+		end
 
 		offset += chunk_length + 4
 
 		if chunk_type == "IEND" then break end
-	end
-
-	for _, chunk_type in order do
-		local parser = CHUNK_PARSER[chunk_type]
-		if parser then
-			local err = parser(context, spans[chunk_type])
-			if err then return err end
-		end
-	end
-
-	local row_width = parsed.width * parsed.headers.channels * parsed.headers.bit_depth + 7
-	local out_size = parsed.height * (row_width + 1)
-	if out_size > MAX_BUFFER_SIZE then
-		return decode_error("overflow", "predetermined decompressed output too large")
 	end
 
 	parsed.cel = function(frame: number?, target: ColorTarget?): (Cel?, CelError)
@@ -586,28 +741,39 @@ local function parse_png(context: DecodeContext): DecodeError?
 			return nil, cel_error("invalid_option", "specified frame must be a number")
 		end
 
-		frame = frame and frame // 1 or 0
+		frame = frame and (frame // 1) % parsed.frames + 1 or 0
 		target = target or "rgba8" :: ColorTarget
 
 		if not CONVERT_TARGET[target] then
 			return nil, cel_error("invalid_option", `invalid color target: {target}`)
 		end
 
-		local decompressed, err0 = zlib.decompress(concatenate_spans(source, spans["IDAT"]), out_size)
-		if not decompressed then return nil, err0 :: CelError end
-		local unfiltered, err1 = unfilter(parsed, decompressed)
-		if not unfiltered then return nil, err1 :: CelError end
+		local active = context.frames[frame] or context.frames[0]
 
-		local converted = CONVERT_COLOR[parsed.headers.color_space](context, unfiltered)
-		local bitmap = CONVERT_TARGET[target](context, converted)
+		local concatenated = concatenate_spans(source, active.spans)
+		local decompressed, err_decompress = zlib.decompress(concatenated, active.out_size + active.height)
+		if not decompressed then
+			return nil, err_decompress :: CelError
+		end
+
+		local unfiltered, err_unfilter = unfilter(context, active, decompressed)
+		if not unfiltered then
+			return nil, err_unfilter
+		end
+
+		local converted = CONVERT_COLOR[parsed.headers.color_space](context, active, unfiltered)
+		local bitmap = CONVERT_TARGET[target](context, active, converted)
 
 		return {
 			bitmap = bitmap,
 			region = {
-				size = vector.create(parsed.width, parsed.height),
-				position = vector.zero
+				size = vector.create(active.width, active.height),
+				position = vector.create(active.x, active.y),
 			},
-			duration = 0,
+			duration = active.duration,
+
+			dispose = active.dispose,
+			blend = active.blend,
 		}, ok()
 	end
 
@@ -622,6 +788,9 @@ return function(source: buffer, options: DecodeOptions?): (Parsed?, DecodeError)
 		length = buffer.len(source),
 
 		crc = options.crc or "all" :: "all",
+
+		frames = {},
+		frame = false,
 
 		spans = {},
 		parsed = {
