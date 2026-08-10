@@ -87,8 +87,8 @@ type FrameContext = {
 	blend: types.BlendOperation,
 	duration: number,
 
-	row_size: number,
-	out_size: number,
+	row_length: number,
+	out_length: number,
 	spans: SourceSpans,
 }
 
@@ -170,9 +170,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		local color_space = color_info.color_space
 		local channels = color_info.channels
 
-		local row_size = (width * bit_depth * channels + 7) // 8
-		local out_size = height * row_size
-		if out_size + height > MAX_BUFFER_SIZE then
+		local row_length = (width * bit_depth * channels + 7) // 8
+		local out_length = height * row_length
+		if out_length + height > MAX_BUFFER_SIZE then
 			return decode_error("overflow", "predetermined decompressed output too large")
 		end
 
@@ -215,8 +215,8 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 			blend = "source",
 			duration = 0,
 
-			row_size = row_size,
-			out_size = out_size,
+			row_length = row_length,
+			out_length = out_length,
 			spans = {},
 		}
 		context.frames[0] = frame
@@ -311,9 +311,9 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 		local delay_num = bit32.byteswap(buffer.readu16(source, chunk_offset + 20) * 0x10000)
 		local delay_den = bit32.byteswap(buffer.readu16(source, chunk_offset + 22) * 0x10000)
 
-		local row_size = (width * headers.bit_depth * headers.channels + 7) // 8
-		local out_size = height * row_size
-		if out_size + height > MAX_BUFFER_SIZE then
+		local row_length = (width * headers.bit_depth * headers.channels + 7) // 8
+		local out_length = height * row_length
+		if out_length + height > MAX_BUFFER_SIZE then
 			return decode_error("overflow", `frame {#context.frames + 1} predetermined decompressed output too large`)
 		end
 
@@ -327,8 +327,8 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 			blend = blend,
 			duration = delay_num / (delay_den == 0 and 100 or delay_den),
 
-			row_size = row_size,
-			out_size = out_size,
+			row_length = row_length,
+			out_length = out_length,
 			spans = {},
 		}
 		table.insert(context.frames, frame)
@@ -380,7 +380,7 @@ local CHUNK_PARSER: {[types.Chunk]: (DecodeContext, SourceSpans, number) -> Deco
 
 local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) -> buffer} = {
 	["truecolor"] = function(context, frame, data)
-		local length = buffer.len(data)
+		local length = frame.out_length
 		local parsed = context.parsed
 		local headers = parsed.headers
 
@@ -444,7 +444,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 		return out
 	end,
 	["grayscale"] = function(context, frame, data)
-		local length = buffer.len(data)
+		local length = frame.out_length
 		local parsed = context.parsed
 		local headers = parsed.headers
 
@@ -516,7 +516,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 		return out
 	end,
 	["indexed"] = function(context, frame, data)
-		local length = buffer.len(data)
+		local length = frame.out_length
 		local parsed = context.parsed
 		local headers = parsed.headers
 
@@ -555,7 +555,7 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, FrameContext, buffer) -> b
 		local out = buffer.create(frame.width * frame.height * 4)
 
 		local cursor = 0
-		for offset = 0, buffer.len(data) - 1, 8 do
+		for offset = 0, frame.out_length - 1, 8 do
 			local r = buffer.readu16(data, offset) // 0x101
 			local g = buffer.readu16(data, offset + 2) // 0x101
 			local b = buffer.readu16(data, offset + 4) // 0x101
@@ -573,7 +573,7 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, FrameContext, buffer) -> b
 		local out = buffer.create(frame.width * frame.height * 2 * 4)
 
 		local cursor = 0
-		for offset = 0, buffer.len(data) - 1, 4 do
+		for offset = 0, frame.out_length - 1, 4 do
 			local r = buffer.readu8(data, offset) * 0x101
 			local g = buffer.readu8(data, offset + 1) * 0x101
 			local b = buffer.readu8(data, offset + 2) * 0x101
@@ -591,10 +591,10 @@ local function unfilter(context: DecodeContext, frame: FrameContext, data: buffe
 	local parsed = context.parsed
 	local headers = parsed.headers
 
-	local row_size = frame.row_size
+	local row_length = frame.row_length
 	local bpp = (headers.bit_depth * headers.channels + 7) // 8
 
-	local out = buffer.create(frame.out_size)
+	local out = buffer.create(frame.out_length)
 
 	local offset = 0
 	local cursor = 0
@@ -604,11 +604,11 @@ local function unfilter(context: DecodeContext, frame: FrameContext, data: buffe
 		offset += 1
 
 		if filter == 0 or (filter == 2 and y == 1) then
-			buffer.copy(out, cursor, data, offset, row_size)
-			offset += row_size
-			cursor += row_size
+			buffer.copy(out, cursor, data, offset, row_length)
+			offset += row_length
+			cursor += row_length
 		elseif filter == 1 then
-			for x = 1, row_size do
+			for x = 1, row_length do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
 				local value = buffer.readu8(data, offset) + a
 				buffer.writeu8(out, cursor, value % 0x100)
@@ -616,27 +616,27 @@ local function unfilter(context: DecodeContext, frame: FrameContext, data: buffe
 				cursor += 1
 			end
 		elseif filter == 2 then
-			for _ = 1, row_size do
-				local b = buffer.readu8(out, cursor - row_size)
+			for _ = 1, row_length do
+				local b = buffer.readu8(out, cursor - row_length)
 				local value = buffer.readu8(data, offset) + b
 				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
 		elseif filter == 3 then
-			for x = 1, row_size do
+			for x = 1, row_length do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
-				local b = y > 1 and buffer.readu8(out, cursor - row_size) or 0
+				local b = y > 1 and buffer.readu8(out, cursor - row_length) or 0
 				local value = buffer.readu8(data, offset) + (a + b) // 2
 				buffer.writeu8(out, cursor, value % 0x100)
 				offset += 1
 				cursor += 1
 			end
 		elseif filter == 4 then
-			for x = 1, row_size do
+			for x = 1, row_length do
 				local a = x > bpp and buffer.readu8(out, cursor - bpp) or 0
-				local b = y > 1 and buffer.readu8(out, cursor - row_size) or 0
-				local c = (y > 1 and x > bpp) and buffer.readu8(out, cursor - row_size - bpp) or 0
+				local b = y > 1 and buffer.readu8(out, cursor - row_length) or 0
+				local c = (y > 1 and x > bpp) and buffer.readu8(out, cursor - row_length - bpp) or 0
 				local p = a + b - c
 				local pa = math.abs(p - a)
 				local pb = math.abs(p - b)
@@ -656,12 +656,12 @@ local function unfilter(context: DecodeContext, frame: FrameContext, data: buffe
 end
 
 local function concatenate_spans(source: buffer, spans: SourceSpans): buffer
-	local out_size = 0
+	local out_length = 0
 	for size = 2, #spans, 2 do
-		out_size += spans[size]
+		out_length += spans[size]
 	end
 
-	local out = buffer.create(out_size)
+	local out = buffer.create(out_length + (out_length % 2))
 	local cursor = 0
 	for index = 1, #spans, 2 do
 		local size = spans[index + 1]
@@ -751,7 +751,7 @@ local function parse_png(context: DecodeContext): DecodeError?
 		local active = context.frames[frame] or context.frames[0]
 
 		local concatenated = concatenate_spans(source, active.spans)
-		local decompressed, err_decompress = zlib.decompress(concatenated, active.out_size + active.height)
+		local decompressed, err_decompress = zlib.decompress(concatenated, active.out_length + active.height)
 		if not decompressed then
 			return nil, err_decompress :: CelError
 		end
