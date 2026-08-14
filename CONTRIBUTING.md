@@ -31,14 +31,14 @@ Each codec is packaged separately under `packages/`, and versioned individually.
 
 ### Casing
 
-| Kind                   | Casing                 |
-| ---------------------- | ---------------------- |
-| variables / properties | `snake_case`           |
-| functions              | `snake_case`           |
-| string literals        | `snake_case`           |
-| constant variables     | `SCREAMING_SNAKE_CASE` |
-| types                  | `PascalCase`           |
-| modules                | `snake_case`           |
+|            Kind | Casing                 |
+| --------------: | ---------------------- |
+|       variables | `snake_case`           |
+|       functions | `snake_case`           |
+| string literals | `snake_case`           |
+|       constants | `SCREAMING_SNAKE_CASE` |
+|           types | `PascalCase`           |
+|         modules | `snake_case`           |
 
 ### Commits
 
