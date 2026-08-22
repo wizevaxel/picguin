@@ -27,15 +27,15 @@ local function run_test(file: string): boolean
 	return failed
 end
 
-local function test_package(dir: string): boolean
-	local tests_dir = `{dir}/{TESTS_DIR}`
-	if fs.stat(tests_dir).kind ~= "directory" then
+local function test_package(package_dir: string): boolean
+	local dir = `{package_dir}/{TESTS_DIR}`
+	if fs.stat(dir).kind ~= "directory" then
 		return false
 	end
 
-	local tests = gather_tests(`{dir}/{TESTS_DIR}`, {})
+	local tests = gather_tests(dir, {})
 
-	print(`\n== {dir} ==`)
+	print(`\n== {package_dir} ==`)
 
 	local failed = false
 	for _, file in tests do
@@ -46,11 +46,20 @@ local function test_package(dir: string): boolean
 end
 
 local function tests()
+	local codec = process.args[2]
+
 	local failed = false
-	for _, entry in fs.entries(PACKAGES_DIR) do
-		if entry.kind ~= "directory" then continue end
-		local dir = fs.path.join(PACKAGES_DIR, entry.name)
-		failed = test_package(dir) or failed
+
+	if codec and #codec > 0 then
+		local package_dir = `{PACKAGES_DIR}/{codec}`
+		assert(fs.stat(package_dir).kind ~= "none", "codec not found in packages")
+		failed = test_package(package_dir)
+	else
+		for _, entry in fs.entries(PACKAGES_DIR) do
+			if entry.kind ~= "directory" then continue end
+			local package_dir = fs.path.join(PACKAGES_DIR, entry.name)
+			failed = test_package(package_dir) or failed
+		end
 	end
 
 	if failed then

@@ -4,10 +4,19 @@ on:
   push:
     branches: [main]
     paths:
-      - 'packages/**'
+      - 'packages/**/*.luau'
+      - 'packages/**/tests/fixtures/**'
   pull_request:
     paths:
-      - 'packages/**'
+      - 'packages/**/*.luau'
+      - 'packages/**/tests/fixtures/**'
+  workflow_dispatch:
+    inputs:
+      codec:
+        type: choice
+        required: false
+        options:
+          - png
 
 jobs:
   test:
@@ -21,4 +30,4 @@ jobs:
         uses: CompeyDev/setup-rokit@v0.2.1
 
       - name: Run tests
-        run: zune run scripts/tests
+        run: zune run scripts/tests ${{ inputs.codec }}
