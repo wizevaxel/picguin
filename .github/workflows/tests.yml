@@ -1,0 +1,33 @@
+name: Test Codecs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/**/*.luau'
+      - 'packages/**/tests/fixtures/**'
+  pull_request:
+    paths:
+      - 'packages/**/*.luau'
+      - 'packages/**/tests/fixtures/**'
+  workflow_dispatch:
+    inputs:
+      codec:
+        type: choice
+        required: false
+        options:
+          - png
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Rokit
+        uses: CompeyDev/setup-rokit@v0.2.1
+
+      - name: Run tests
+        run: zune run scripts/tests ${{ inputs.codec }}

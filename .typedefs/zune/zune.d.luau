@@ -2,10 +2,10 @@
 
 --[[ serde ]]
 export type SerdeJsonEncodeConfig = {
-    pretty_indent: number?,
+    pretty_indent: number?, 
 }
 export type SerdeJsonDecodeConfig = {
-    preserve_null: boolean?,
+    preserve_null: boolean?, 
 }
 type YamlInput = string | number | boolean | {
     [string]: YamlInput
@@ -14,13 +14,13 @@ type YamlOutput = string | {
     [string]: YamlOutput
 }
 export type SerdeGenericCompressionOptions = {
-    level: number?,
+    level: number?, 
 }
-type AdvancedCompressionFn =
+type AdvancedCompressionFn = 
     & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
     & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
     & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer)
-type DecompressionFn =
+type DecompressionFn = 
     & ((compressed: string) -> string)
     & ((compressed: buffer) -> buffer)
     & ((compressed: string | buffer) -> string | buffer)
@@ -31,10 +31,10 @@ export type _zune_serde_json = {
         none: number,
         two_spaces: number,
         four_spaces: number,
-        tabs: number,
+        tabs: number, 
     },
     values: {
-        null: any,
+        null: any, 
     }
 }
 export type _zune_serde_json5 = {
@@ -44,97 +44,97 @@ export type _zune_serde_json5 = {
         none: number,
         two_spaces: number,
         four_spaces: number,
-        tabs: number,
+        tabs: number, 
     },
     values: {
-        null: any,
+        null: any, 
     }
 }
 export type _zune_serde_toml = {
     encode: (object: {[string]: any}) -> string,
-    decode: (toml: string | buffer) -> {[string]: any},
+    decode: (toml: string | buffer) -> {[string]: any}, 
 }
 export type _zune_serde_yaml = {
     encode: (object: YamlInput) -> string,
-    decode: (yaml: string | buffer) -> YamlOutput,
+    decode: (yaml: string | buffer) -> YamlOutput, 
 }
 export type _zune_serde_base64 = {
-    encode:
+    encode: 
         & ((value: string) -> string)
         & ((value: buffer) -> buffer)
         & ((value: string | buffer) -> string | buffer),
-    decode:
+    decode: 
         & ((base64: string) -> string)
         & ((base64: buffer) -> buffer)
-        & ((base64: string | buffer) -> string | buffer),
+        & ((base64: string | buffer) -> string | buffer), 
 }
 export type _zune_serde_gzip = {
-    compress:
+    compress: 
         & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
         & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
         & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer),
-    decompress:
+    decompress: 
         & ((compressed: string) -> string)
         & ((compressed: buffer) -> buffer)
-        & ((compressed: string | buffer) -> string | buffer),
+        & ((compressed: string | buffer) -> string | buffer), 
 }
 export type _zune_serde_flate = {
-    compress:
+    compress: 
         & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
         & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
         & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer),
-    decompress:
+    decompress: 
         & ((compressed: string) -> string)
         & ((compressed: buffer) -> buffer)
-        & ((compressed: string | buffer) -> string | buffer),
+        & ((compressed: string | buffer) -> string | buffer), 
 }
 export type _zune_serde_zlib = {
-    compress:
+    compress: 
         & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
         & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
         & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer),
-    decompress:
+    decompress: 
         & ((compressed: string) -> string)
         & ((compressed: buffer) -> buffer)
-        & ((compressed: string | buffer) -> string | buffer),
+        & ((compressed: string | buffer) -> string | buffer), 
 }
 export type _zune_serde_brotli = {
-    compress:
+    compress: 
         & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
         & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
         & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer),
-    decompress:
+    decompress: 
         & ((compressed: string) -> string)
         & ((compressed: buffer) -> buffer)
-        & ((compressed: string | buffer) -> string | buffer),
+        & ((compressed: string | buffer) -> string | buffer), 
 }
 export type _zune_serde_zstd = {
-    compress:
+    compress: 
         & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
         & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
         & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer),
-    decompress:
+    decompress: 
         & ((compressed: string) -> string)
         & ((compressed: buffer) -> buffer)
-        & ((compressed: string | buffer) -> string | buffer),
+        & ((compressed: string | buffer) -> string | buffer), 
 }
 export type _zune_serde_lz4 = {
-    compress:
+    compress: 
         & ((raw: string) -> string)
         & ((raw: buffer) -> buffer)
         & ((raw: string | buffer) -> string | buffer),
-    compressFrame:
+    compressFrame: 
         & ((raw: string, opts: SerdeGenericCompressionOptions?) -> string)
         & ((raw: buffer, opts: SerdeGenericCompressionOptions?) -> buffer)
         & ((raw: string | buffer, opts: SerdeGenericCompressionOptions?) -> string | buffer),
-    decompress:
+    decompress: 
         & ((compressed: string, size: number) -> string)
         & ((compressed: buffer, size: number) -> buffer)
         & ((compressed: string | buffer, size: number) -> string | buffer),
-    decompressFrame:
+    decompressFrame: 
         & ((compressed: string) -> string)
         & ((compressed: buffer) -> buffer)
-        & ((compressed: string | buffer) -> string | buffer),
+        & ((compressed: string | buffer) -> string | buffer), 
 }
 export type _zune_serde = {
     json: _zune_serde_json,
@@ -147,10 +147,10 @@ export type _zune_serde = {
     zlib: _zune_serde_zlib,
     brotli: _zune_serde_brotli,
     zstd: _zune_serde_zstd,
-    lz4: _zune_serde_lz4,
+    lz4: _zune_serde_lz4, 
 }
 --[[ fs ]]
-export type MetadataKind =
+export type MetadataKind = 
     | "file"
     | "directory"
     | "sym_link"
@@ -170,8 +170,8 @@ export type Metadata = {
     accessed_at: number,
     size: number,
     permissions: {
-        read_only: boolean,
-    },
+        read_only: boolean, 
+    }, 
 }
 export type FileStat = {
     kind: MetadataKind,
@@ -179,17 +179,17 @@ export type FileStat = {
     modified_at: number,
     accessed_at: number,
     size: number,
-    mode: number,
+    mode: number, 
 } | {
-    kind: "none",
+    kind: "none", 
 }
 declare extern type FileHandle with
-    read:
+    read: 
         & ((self: FileHandle, amount: number?, bytes: nil) -> string)
         & ((self: FileHandle, amount: number?, bytes: false) -> string)
         & ((self: FileHandle, amount: number?, bytes: true) -> buffer)
         & ((self: FileHandle, amount: number?, bytes: boolean) -> string | buffer)
-    readSync:
+    readSync: 
         & ((self: FileHandle, amount: number?, bytes: nil) -> string)
         & ((self: FileHandle, amount: number?, bytes: false) -> string)
         & ((self: FileHandle, amount: number?, bytes: true) -> buffer)
@@ -206,24 +206,24 @@ declare extern type FileHandle with
     lock: (self: FileHandle, lockMode: ("shared" | "exclusive" | "none")?) -> boolean
     unlock: (self: FileHandle) -> ()
     sync: (self: FileHandle) -> ()
-    readonly:
+    readonly: 
         & ((self: FileHandle) -> boolean)
         & ((self: FileHandle, enabled: boolean) -> ())
-    close: (self: FileHandle) -> ()
+    close: (self: FileHandle) -> () 
 end
 declare extern type FileWatcher with
-    stop: (self: FileWatcher) -> ()
+    stop: (self: FileWatcher) -> () 
 end
 export type FileCreateOptions = {
     exclusive: boolean?,
-    truncate: boolean?,
+    truncate: boolean?, 
 }
 export type FileOpenOptions = {
-    mode: string?,
+    mode: string?, 
 }
 type DirectoryEntry = {
     name: string,
-    kind: MetadataKind,
+    kind: MetadataKind, 
 }
 export type _zune_fs_path = {
     join: (...string) -> string,
@@ -234,18 +234,18 @@ export type _zune_fs_path = {
     stem: (path: string) -> string,
     extension: (path: string) -> string,
     isAbsolute: (path: string) -> boolean,
-    globMatch: (path: string, pattern: string) -> boolean,
+    globMatch: (path: string, pattern: string) -> boolean, 
 }
 type WatchEvent = "created" | "modified" | "moved" | "renamed" | "deleted" | "metadata"
 export type _zune_fs = {
     createFile: (path: string, opts: FileCreateOptions?) -> FileHandle,
     openFile: (path: string, opts: FileOpenOptions?) -> FileHandle,
-    readFile:
+    readFile: 
         & ((path: string, bytes: nil) -> string)
         & ((path: string, bytes: false) -> string)
         & ((path: string, bytes: true) -> buffer)
         & ((path: string, bytes: boolean) -> string | buffer),
-    readFileSync:
+    readFileSync: 
         & ((path: string, bytes: nil) -> string)
         & ((path: string, bytes: false) -> string)
         & ((path: string, bytes: true) -> buffer)
@@ -267,7 +267,7 @@ export type _zune_fs = {
     embedFile: (path: string) -> buffer,
     embeddedFiles: () -> {string},
     embeddedScripts: () -> {string},
-    path: _zune_fs_path,
+    path: _zune_fs_path, 
 }
 --[[ mem ]]
 export type MemWritableSlice = buffer | FFIPointer
@@ -316,7 +316,7 @@ export type _zune_mem = {
     toVector2: (src: MemReadableSlice, offset: number?) -> vector,
     toVector3: (src: MemReadableSlice, offset: number?) -> vector,
     writeVector2: (dest: MemWritableSlice, offset: number?, vec: vector) -> (),
-    writeVector3: (dest: MemWritableSlice, offset: number?, vec: vector) -> (),
+    writeVector3: (dest: MemWritableSlice, offset: number?, vec: vector) -> (), 
 }
 --[[ thread ]]
 declare extern type Thread with
@@ -324,11 +324,11 @@ declare extern type Thread with
     join: (self: Thread) -> ()
     status: (self: Thread) -> "ready" | "running" | "dead"
     receive: (self: Thread) -> (...any)
-    send: (self: Thread, ...any) -> ()
+    send: (self: Thread, ...any) -> () 
 end
 export type ThreadLoadOptions = {
     chunk_name: string?,
-    native_code_gen: boolean?,
+    native_code_gen: boolean?, 
 }
 export type _zune_thread = {
     fromModule: (module: string) -> Thread,
@@ -336,7 +336,7 @@ export type _zune_thread = {
     receive: () -> ...any,
     send: (...any) -> (),
     getCpuCount: () -> number,
-    isThread: boolean,
+    isThread: boolean, 
 }
 --[[ time ]]
 export type TimeDictionary = {
@@ -346,7 +346,7 @@ export type TimeDictionary = {
     hour: number,
     minute: number,
     second: number,
-    millisecond: number,
+    millisecond: number, 
 }
 export type _zune_time_date = {
     now: () -> DateTime,
@@ -355,10 +355,10 @@ export type _zune_time_date = {
     fromUnixTimestampMillis: (timestamp: number) -> DateTime,
     fromLocalTime: (year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number) -> DateTime,
     fromUniversalTime: (year: number, month: number, day: number, hour: number, minute: number, second: number, millisecond: number) -> DateTime,
-    parse: (date: string) -> DateTime,
+    parse: (date: string) -> DateTime, 
 }
 export type _zune_time_instant = {
-    now: () -> buffer,
+    now: () -> buffer, 
 }
 declare extern type DateTime with
     timestamp: number
@@ -367,13 +367,13 @@ declare extern type DateTime with
     toUniversalTime: (self: DateTime) -> TimeDictionary
     toIsoDate: (self: DateTime) -> string
     formatLocalTime: (self: DateTime, format: string) -> string
-    formatUniversalTime: (self: DateTime, format: string) -> string
+    formatUniversalTime: (self: DateTime, format: string) -> string 
 end
 export type _zune_time = {
     date: _zune_time_date,
     instant: _zune_time_instant,
     timestamp: () -> number,
-    timestampMillis: () -> number,
+    timestampMillis: () -> number, 
 }
 --[[ process ]]
 export type ProcessOptions = {
@@ -384,15 +384,15 @@ export type ProcessOptions = {
     shell: (boolean | string)?,
     stdin: ("inherit" | "pipe" | "ignore")?,
     stdout: ("inherit" | "pipe" | "ignore")?,
-    stderr: ("inherit" | "pipe" | "ignore")?,
+    stderr: ("inherit" | "pipe" | "ignore")?, 
 }
 export type ProcessResult = {
     ok: boolean,
-    code: number,
+    code: number, 
 }
 export type ProcessRunResult<T> = ProcessResult & {
     stdout: T,
-    stderr: T,
+    stderr: T, 
 }
 export type _zune_process_env = {
     [string]: string
@@ -403,7 +403,7 @@ declare extern type ProcessChild with
     stdout: FileHandle?
     stderr: FileHandle?
     wait: (self: ProcessChild) -> ProcessResult
-    kill: (self: ProcessChild) -> ProcessResult
+    kill: (self: ProcessChild) -> ProcessResult 
 end
 export type _zune_process = {
     args: {string},
@@ -412,7 +412,7 @@ export type _zune_process = {
     cwd: () -> string,
     pid: () -> number,
     create: (exec: string, args: {string}?, opts: ProcessOptions?) -> ProcessChild,
-    run:
+    run: 
         & ((exec: string) -> ProcessRunResult<string>)
         & ((exec: string, args: {string}?) -> ProcessRunResult<string>)
         & ((exec: string, args: {string}?, opts: ProcessOptions?, bytes: nil) -> ProcessRunResult<string?>)
@@ -420,12 +420,12 @@ export type _zune_process = {
         & ((exec: string, args: {string}?, opts: ProcessOptions?, bytes: true) -> ProcessRunResult<buffer?>)
         & ((exec: string, args: {string}?, opts: ProcessOptions?, bytes: boolean) -> ProcessRunResult<string | buffer?>),
     exit: (code: number) -> never,
-    onSignal: (signal: "INT", callback: () -> ()) -> (),
+    onSignal: (signal: "INT", callback: () -> ()) -> (), 
 }
 --[[ regex ]]
 export type RegexMatch = {
     string: string,
-    index: number,
+    index: number, 
 }
 declare extern type Regex with
     match: (self: Regex, input: string | buffer) -> {RegexMatch}?
@@ -435,41 +435,41 @@ declare extern type Regex with
     isMatch: (self: Regex, input: string | buffer) -> boolean
     format: (self: Regex, str: string, format: string) -> string
     replace: (self: Regex, str: string, replacement: string) -> string
-    replaceAll: (self: Regex, str: string, replacement: string) -> string
+    replaceAll: (self: Regex, str: string, replacement: string) -> string 
 end
 export type _zune_regex = {
-    create: (pattern: string | buffer, flags: string?) -> Regex,
+    create: (pattern: string | buffer, flags: string?) -> Regex, 
 }
 --[[ random ]]
 declare extern type Random with
-    nextNumber:
+    nextNumber: 
         & ((self: Random) -> number)
         & ((self: Random, min: number, max: number) -> number)
     nextInteger: (self: Random, min: number, max: number) -> number
     nextBoolean: (self: Random) -> boolean
-    clone: (self: Random) -> Random
+    clone: (self: Random) -> Random 
 end
 type RandomNewFn = (seed: number?) -> Random
 export type _zune_random_LuauPcg32 = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random_Isaac64 = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random_Pcg32 = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random_Xoroshiro128 = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random_Xoshiro256 = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random_Sfc64 = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random_RomuTrio = {
-    new: (seed: number?) -> Random,
+    new: (seed: number?) -> Random, 
 }
 export type _zune_random = {
     new: (seed: number?) -> Random,
@@ -479,7 +479,7 @@ export type _zune_random = {
     Xoroshiro128: _zune_random_Xoroshiro128,
     Xoshiro256: _zune_random_Xoshiro256,
     Sfc64: _zune_random_Sfc64,
-    RomuTrio: _zune_random_RomuTrio,
+    RomuTrio: _zune_random_RomuTrio, 
 }
 --[[ testing ]]
 type BasicCases = {
@@ -494,19 +494,19 @@ type BasicCases = {
     toBeNan: () -> (),
     toHaveLength: (expected: number) -> (),
     toBeFalsy: () -> (),
-    toBeTruthy: () -> (),
+    toBeTruthy: () -> (), 
 }
 type ExpectCases = BasicCases & {
-    never: BasicCases,
+    never: BasicCases, 
 }
 type FunctionalCases = ExpectCases & {
     toThrow: (expected: string?) -> (),
-    never: FunctionalCases,
+    never: FunctionalCases, 
 }
 type ExpectHandler = {
     any: (type: string) -> any,
     type: (type: "nil" | "boolean" | "number" | "string" | "function" | "table" | "userdata" | "thread" | "buffer" | "vector") -> any,
-    similar: (expected: any) -> any,
+    similar: (expected: any) -> any, 
 }
 export type _zune_testing = {
     running: boolean,
@@ -518,40 +518,40 @@ export type _zune_testing = {
     defer: (fn: () -> ()) -> (),
     expect: ((value: (...any) -> ...any) -> FunctionalCases) & ((value: any) -> ExpectCases) & ExpectHandler,
     expected: (value: any) -> (),
-    expectEqual: ((expected: any, value: any) -> ()),
+    expectEqual: ((expected: any, value: any) -> ()), 
 }
 --[[ luau ]]
 export type LuauCompileOptions = {
     debug_level: number?,
     optimization_level: number?,
     coverage_level: number?,
-    type_info_level: number?,
+    type_info_level: number?, 
 }
 export type LuauLoadOptions = {
     env: {
         [any]: any
     }?,
     chunk_name: string?,
-    native_code_gen: boolean?,
+    native_code_gen: boolean?, 
 }
 export type LuauCoverageData = {
     name: string,
     line: number,
     depth: number,
-    [number]: number,
+    [number]: number, 
 }
 type Position = {
     line: number,
-    column: number,
+    column: number, 
 }
 export type Location = {
     begin: Position,
-    ["end"]: Position,
+    ["end"]: Position, 
 }
 export type ParseResult = {
     errors: {{
         message: string,
-        location: Location,
+        location: Location, 
     }}?,
     root: {any},
     eof: {
@@ -564,8 +564,8 @@ export type ParseResult = {
     hotcomments: {{
         header: boolean,
         content: string,
-        location: Location,
-    }},
+        location: Location, 
+    }}, 
 }
 export type _zune_luau = {
     compile: (source: string | buffer, opts: LuauCompileOptions?) -> buffer,
@@ -573,24 +573,24 @@ export type _zune_luau = {
     coverage: (fn: (...any) -> ...any) -> {LuauCoverageData},
     parse: (src: string | buffer) -> ParseResult,
     parseExpr: (src: string | buffer) -> any,
-    garbagecollect: () -> (),
+    garbagecollect: () -> (), 
 }
 --[[ platform ]]
-export type PlatformCPUArchitecture =
+export type PlatformCPUArchitecture = 
     | "aarch64"
     | "x86_64"
     | "riscv64"
     | "powerpc64le"
-export type PlatformOS =
+export type PlatformOS = 
     | "linux"
     | "windows"
     | "macos"
     | "freebsd"
 export type _zune_platform_cpu = {
     arch: PlatformCPUArchitecture,
-    endian: "big" | "little",
+    endian: "big" | "little", 
 }
-export type PlatformABI =
+export type PlatformABI = 
     | "none"
     | "gnu"
     | "gnuabin32"
@@ -630,7 +630,7 @@ export type _zune_platform = {
     getTotalMemory: () -> number,
     getPageSize: () -> number,
     getKernelVersion: () -> string,
-    getHostName: () -> string,
+    getHostName: () -> string, 
 }
 --[[ net ]]
 declare extern type NetworkSocket with
@@ -645,22 +645,22 @@ declare extern type NetworkSocket with
     getName: (self: NetworkSocket) -> NetworkAddress
     setOption: (self: NetworkSocket, level: number, optname: number, value: boolean | string | buffer) -> ()
     close: (self: NetworkSocket) -> ()
-    isOpen: (self: NetworkSocket) -> boolean
+    isOpen: (self: NetworkSocket) -> boolean 
 end
 declare extern type HttpServer with
     stop: (self: HttpServer) -> ()
     getPort: (self: HttpServer) -> number
-    isRunning: (self: HttpServer) -> boolean
+    isRunning: (self: HttpServer) -> boolean 
 end
 declare extern type HttpWebSocket with
     send: (self: HttpWebSocket, message: string | buffer) -> ()
     close: (self: HttpWebSocket, code: number?) -> ()
-    isConnected: (self: HttpWebSocket) -> boolean
+    isConnected: (self: HttpWebSocket) -> boolean 
 end
 export type NetworkAddress = {
     family: number,
     port: number,
-    address: string,
+    address: string, 
 }
 export type HttpServerRequest = {
     method: string,
@@ -672,20 +672,20 @@ export type HttpServerRequest = {
     headers: {
         [string]: string
     },
-    body: string?,
+    body: string?, 
 }
 export type HttpServerResponse = {
     status_code: number,
     headers: {
         [string]: string
     }?,
-    body: (string | buffer)?,
+    body: (string | buffer)?, 
 }
 export type ServerWebSocketHandlers = {
     upgrade: ((request: HttpServerRequest) -> boolean)?,
     open: ((websocket: HttpWebSocket) -> ())?,
     message: ((websocket: HttpWebSocket, message: string | buffer) -> ())?,
-    close: ((websocket: HttpWebSocket, code: number) -> ())?,
+    close: ((websocket: HttpWebSocket, code: number) -> ())?, 
 }
 export type HttpServeOptions = {
     port: number,
@@ -700,8 +700,8 @@ export type HttpServeOptions = {
     request: (request: HttpServerRequest) -> string | buffer | HttpServerResponse,
     websocket: ServerWebSocketHandlers?,
     tls: {
-        auth: TlsCertKeyPair?,
-    }?,
+        auth: TlsCertKeyPair?, 
+    }?, 
 }
 export type HttpResponse<T> = {
     ok: boolean,
@@ -710,7 +710,7 @@ export type HttpResponse<T> = {
     headers: {
         [string]: string
     },
-    body: T,
+    body: T, 
 }
 export type HttpRequestOptions = {
     headers: {
@@ -725,8 +725,8 @@ export type HttpRequestOptions = {
     max_headers: number?,
     tls: {
         host: string?,
-        ca: TlsCertBundle?,
-    }?,
+        ca: TlsCertBundle?, 
+    }?, 
 }
 export type HttpWebSocketOptions = {
     headers: {
@@ -739,8 +739,8 @@ export type HttpWebSocketOptions = {
     message: ((socket: HttpWebSocket, message: string | buffer) -> ())?,
     tls: {
         host: string?,
-        ca: TlsCertBundle?,
-    }?,
+        ca: TlsCertBundle?, 
+    }?, 
 }
 export type _zune_net_ADDRF = {
     RDS: number,
@@ -791,7 +791,7 @@ export type _zune_net_ADDRF = {
     ECONET: number,
     IRDA: number,
     SECURITY: number,
-    X25: number,
+    X25: number, 
 }
 export type _zune_net_SOCKF = {
     DCCP: number,
@@ -802,7 +802,7 @@ export type _zune_net_SOCKF = {
     STREAM: number,
     SEQPACKET: number,
     CLOEXEC: number,
-    NONBLOCK: number,
+    NONBLOCK: number, 
 }
 export type _zune_net_SOCKOPT = {
     ATTACH_FILTER: number,
@@ -872,7 +872,7 @@ export type _zune_net_SOCKOPT = {
     SECURITY_AUTHENTICATION: number,
     PROTOCOL: number,
     ACCEPTCONN: number,
-    RCVTIMEO: number,
+    RCVTIMEO: number, 
 }
 export type _zune_net_SOCKOPTLV = {
     PPPOL2TP: number,
@@ -902,7 +902,7 @@ export type _zune_net_SOCKOPTLV = {
     DCCP: number,
     IRDA: number,
     ATM: number,
-    IP: number,
+    IP: number, 
 }
 export type _zune_net_IPPROTO = {
     COMP: number,
@@ -937,17 +937,17 @@ export type _zune_net_IPPROTO = {
     ROUTING: number,
     EGP: number,
     TP: number,
-    IP: number,
+    IP: number, 
 }
 export type _zune_net_http = {
     serve: (opts: HttpServeOptions) -> HttpServer,
-    request:
+    request: 
         & ((host: string) -> HttpResponse<string>)
         & ((host: string, opts: HttpRequestOptions?, bytes: nil) -> HttpResponse<string>)
         & ((host: string, opts: HttpRequestOptions?, bytes: false) -> HttpResponse<string>)
         & ((host: string, opts: HttpRequestOptions?, bytes: true) -> HttpResponse<buffer>)
         & ((host: string, opts: HttpRequestOptions?, bytes: boolean) -> HttpResponse<string | buffer>),
-    websocket: (host: string, opts: HttpWebSocketOptions) -> HttpWebSocket,
+    websocket: (host: string, opts: HttpWebSocketOptions) -> HttpWebSocket, 
 }
 export type _zune_net = {
     ADDRF: _zune_net_ADDRF,
@@ -962,30 +962,30 @@ export type _zune_net = {
 --[[ ffi ]]
 export type FFILibrary = {
     getSymbol: (self: FFILibrary, symbol: string) -> FFIPointer?,
-    [string]: (...any) -> any,
+    [string]: (...any) -> any, 
 }
 declare extern type FFICompiled with
     getSymbol: (self: FFICompiled, symbol: string) -> FFIPointer?
-    listSymbols: (self: FFICompiled) -> {string}
+    listSymbols: (self: FFICompiled) -> {string} 
 end
 declare extern type FFIDataType with
     size: (self: FFIDataType) -> number
     alignment: (self: FFIDataType) -> number
-    array: (self: FFIDataType, count: number) -> FFIArrayType
+    array: (self: FFIDataType, count: number) -> FFIArrayType 
 end
 declare extern type FFIVectorType extends FFIDataType with
-    offset: (self: FFIVectorType, index: number) -> number
+    offset: (self: FFIVectorType, index: number) -> number 
 end
 declare extern type FFIStructureType extends FFIDataType with
     offset: (self: FFIStructureType, field: string) -> number
-    new: (self: FFIStructureType, fields: {[string]: buffer | number | FFIPointer | vector}) -> buffer
+    new: (self: FFIStructureType, fields: {[string]: buffer | number | FFIPointer | vector}) -> buffer 
 end
 declare extern type FFIArrayType extends FFIVectorType with
-    new: (self: FFIArrayType, values: {[number]: buffer | number | FFIPointer | vector}) -> buffer
+    new: (self: FFIArrayType, values: {[number]: buffer | number | FFIPointer | vector}) -> buffer 
 end
 declare extern type FFIPointerType extends FFIDataType with
     tag: (self: FFIPointerType) -> number
-    newTag: (self: FFIPointerType, tag: string | buffer) -> FFIPointerType
+    newTag: (self: FFIPointerType, tag: string | buffer) -> FFIPointerType 
 end
 export type FFIAnyDataType = FFIDataType | FFIStructureType | FFIArrayType | FFIPointerType
 export type FFIFunctionDefinition = {
@@ -995,7 +995,7 @@ export type FFIFunctionDefinition = {
 declare extern type FFIPointer with
     release: (self: FFIPointer) -> FFIPointer
     retain: (self: FFIPointer) -> FFIPointer
-    tag:
+    tag: 
         & ((self: FFIPointer) -> number)
         & ((self: FFIPointer, tag: number) -> FFIPointer)
     drop: (self: FFIPointer) -> FFIPointer
@@ -1024,13 +1024,13 @@ declare extern type FFIPointer with
     writef32: (self: FFIPointer, offset: number, value: number | buffer | boolean) -> ()
     writef64: (self: FFIPointer, offset: number, value: number | buffer | boolean) -> ()
     writeptr: (self: FFIPointer, offset: number, value: FFIPointer) -> ()
-    size:
+    size: 
         & ((self: FFIPointer) -> number?)
         & ((self: FFIPointer, size: number) -> ())
-    alignment:
+    alignment: 
         & ((self: FFIPointer) -> number?)
         & ((self: FFIPointer, alignment: number) -> ())
-    span: (self: FFIPointer, offset: number?) -> buffer
+    span: (self: FFIPointer, offset: number?) -> buffer 
 end
 export type _zune_ffi_types = {
     void: FFIDataType,
@@ -1046,10 +1046,10 @@ export type _zune_ffi_types = {
     double: FFIDataType,
     pointer: FFIPointerType,
     vector2_32: FFIVectorType,
-    vector3_32: FFIVectorType,
+    vector3_32: FFIVectorType, 
 }
 export type _zune_ffi_c = {
-    compile: (src: string, opts: FFICompileOptions?) -> FFICompiled,
+    compile: (src: string, opts: FFICompileOptions?) -> FFICompiled, 
 }
 export type FFICompileOptions = {
     options: string?,
@@ -1060,7 +1060,7 @@ export type FFICompileOptions = {
     sysincludes: {string}?,
     symbols: {
         [string]: FFIPointer
-    }?,
+    }?, 
 }
 export type _zune_ffi = {
     prefix: string,
@@ -1079,11 +1079,11 @@ export type _zune_ffi = {
     struct: (fields: {{[string]: FFIAnyDataType}}) -> FFIStructureType,
     fn: (definition: FFIFunctionDefinition, srcPtr: FFIPointer) -> ((...any) -> any),
     closure: (definition: FFIFunctionDefinition, handler: (...any) -> any) -> FFIPointer,
-    dlopen: (path: string, functions: {[string]: FFIFunctionDefinition}) -> FFILibrary,
+    dlopen: (path: string, functions: {[string]: FFIFunctionDefinition}) -> FFILibrary, 
 }
 --[[ io ]]
 declare extern type IoReadable with
-    read:
+    read: 
         & ((self: IoReadable, amount: number?, bytes: nil) -> buffer)
         & ((self: IoReadable, amount: number?, bytes: true) -> buffer)
         & ((self: IoReadable, amount: number?, bytes: false) -> string)
@@ -1095,7 +1095,7 @@ declare extern type IoReadable with
     readi16: (self: IoReadable) -> number
     readi32: (self: IoReadable) -> number
     readf32: (self: IoReadable) -> number
-    readf64: (self: IoReadable) -> number
+    readf64: (self: IoReadable) -> number 
 end
 declare extern type IoWritable with
     write: (self: IoWritable, data: string | buffer) -> ()
@@ -1106,10 +1106,10 @@ declare extern type IoWritable with
     writei16: (self: IoWritable, value: number) -> ()
     writei32: (self: IoWritable, value: number) -> ()
     writef32: (self: IoWritable, value: number) -> ()
-    writef64: (self: IoWritable, value: number) -> ()
+    writef64: (self: IoWritable, value: number) -> () 
 end
 declare extern type BufferStream with
-    read:
+    read: 
         & ((self: BufferStream, amount: number?, bytes: nil) -> buffer)
         & ((self: BufferStream, amount: number?, bytes: true) -> buffer)
         & ((self: BufferStream, amount: number?, bytes: false) -> string)
@@ -1121,30 +1121,30 @@ declare extern type BufferStream with
     seekBy: (self: BufferStream, offset: number) -> ()
     canRead: (self: BufferStream, amount: number?) -> boolean
     writer: (self: BufferStream) -> IoWritable
-    reader: (self: BufferStream) -> IoReadable
+    reader: (self: BufferStream) -> IoReadable 
 end
 declare extern type BufferSink with
     len: number
     closed: boolean
-    flush:
+    flush: 
         & ((self: BufferSink, bytes: nil) -> buffer)
         & ((self: BufferSink, bytes: true) -> buffer)
         & ((self: BufferSink, bytes: false) -> string)
         & ((self: BufferSink, bytes: boolean) -> string | buffer)
     write: (self: BufferSink, data: string | buffer) -> ()
     writer: (self: BufferSink) -> IoWritable
-    close: (self: BufferSink) -> ()
+    close: (self: BufferSink) -> () 
 end
 export type _zune_io_terminal = {
     isTTY: boolean,
     getCurrentMode: () -> "normal" | "raw",
     enableRawMode: () -> boolean,
     restoreMode: () -> boolean,
-    getSize: () -> (number?, number?),
+    getSize: () -> (number?, number?), 
 }
 export type BufferSinkOptions = {
     limit: number?,
-    size: number?,
+    size: number?, 
 }
 export type _zune_io = {
     format: (...any) -> string,
@@ -1153,18 +1153,18 @@ export type _zune_io = {
     terminal: _zune_io_terminal,
     stdout: FileHandle,
     stderr: FileHandle,
-    stdin: FileHandle,
+    stdin: FileHandle, 
 }
 --[[ crypto ]]
 type Input = string | buffer
 declare extern type CryptoHash with
-    digest:
+    digest: 
         & ((self: CryptoHash) -> buffer)
         & ((self: CryptoHash, encoding: "binary") -> buffer)
         & ((self: CryptoHash, encoding: "hex" | "base64") -> string)
         & ((self: CryptoHash, encoding: string) -> string | buffer)
     update: (self: CryptoHash, value: string | buffer) -> ()
-    copy: (self: CryptoHash) -> CryptoHash
+    copy: (self: CryptoHash) -> CryptoHash 
 end
 declare extern type TlsCertBundle with
 
@@ -1172,7 +1172,7 @@ end
 declare extern type TlsCertKeyPair with
 
 end
-export type CryptoHashAlgorithms =
+export type CryptoHashAlgorithms = 
     | "sha1"
     | "md5"
     | "blake3"
@@ -1195,160 +1195,160 @@ export type CryptoHashAlgorithms =
     | "blake2s256"
 type BcryptPasswordOptions = {
     algorithm: "bcrypt"?,
-    cost: number?,
+    cost: number?, 
 }
 type Argon2PasswordOptions = {
     algorithm: ("argon2d" | "argon2i" | "argon2id")?,
     time_cost: number?,
     memory_cost: number?,
-    threads: number?,
+    threads: number?, 
 }
 export type CryptoPasswordOptions = BcryptPasswordOptions | Argon2PasswordOptions
 type EncryptedData = {
     cipher: buffer,
-    tag: buffer,
+    tag: buffer, 
 }
 export type CryptoTlsClientConfig = {
     host: string,
-    ca: TlsCertBundle,
+    ca: TlsCertBundle, 
 }
 export type _zune_crypto_password = {
     hash: (password: string | buffer, opts: CryptoPasswordOptions?) -> string,
-    verify: (password: string | buffer, hash: string | buffer) -> boolean,
+    verify: (password: string | buffer, hash: string | buffer) -> boolean, 
 }
 export type _zune_crypto_uuid = {
     v4: () -> string,
-    v7: () -> string,
+    v7: () -> string, 
 }
 export type _zune_crypto_random = {
-    nextNumber:
+    nextNumber: 
         & (() -> number)
         & ((min: number, max: number) -> number),
-    nextInteger:
+    nextInteger: 
         & (() -> number)
         & ((min: number, max: number) -> number),
     nextBoolean: () -> boolean,
-    fill: (buffer: buffer, offset: number, length: number) -> (),
+    fill: (buffer: buffer, offset: number, length: number) -> (), 
 }
 export type _zune_crypto_aead = {
     aes_gcm: {
         Aes128Gcm: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aes256Gcm: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
-        },
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
+        }, 
     },
     aes_ocb: {
         Aes128Ocb: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aes256Ocb: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
-        },
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
+        }, 
     },
     aegis: {
         Aegis128X4: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis128X2: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis128L: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis256X4: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis256X2: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis128X4_256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis128X2_256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis128L_256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis256X4_256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis256X2_256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         Aegis256_256: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
-        },
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
+        }, 
     },
     chacha_poly: {
         ChaCha8Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         ChaCha12Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         ChaCha20Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         XChaCha8Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         XChaCha12Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
         },
         XChaCha20Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
-        },
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
+        }, 
     },
     salsa_poly: {
         XSalsa20Poly1305: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
-        },
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
+        }, 
     },
     isap: {
         IsapA128A: {
             encrypt: (data: Input, key: Input, nonce: Input, ad: Input?) -> EncryptedData,
-            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string,
-        },
-    },
+            decrypt: (cipher: Input, tag: Input, key: Input, nonce: Input, ad: Input?) -> string, 
+        }, 
+    }, 
 }
 export type _zune_crypto_tls = {
     bundleFromSystem: () -> TlsCertBundle,
     bundleFromFile: (file: string) -> TlsCertBundle,
     keyPairFromFile: (certFile: string, keyFile: string) -> TlsCertKeyPair,
     setupClient: (socket: NetworkSocket, config: CryptoTlsClientConfig) -> (),
-    setupServer: (socket: NetworkSocket, config: CryptoTlsServerConfig) -> (),
+    setupServer: (socket: NetworkSocket, config: CryptoTlsServerConfig) -> (), 
 }
 export type CryptoTlsServerConfig = {
-    auth: TlsCertKeyPair,
+    auth: TlsCertKeyPair, 
 }
 export type _zune_crypto = {
     createHash: (algorithm: CryptoHashAlgorithms, secret: string | buffer?) -> CryptoHash,
@@ -1356,12 +1356,12 @@ export type _zune_crypto = {
     uuid: _zune_crypto_uuid,
     random: _zune_crypto_random,
     aead: _zune_crypto_aead,
-    tls: _zune_crypto_tls,
+    tls: _zune_crypto_tls, 
 }
 --[[ require ]]
 export type _zune_require = {
     navigate: (path: string | buffer, from: (string | buffer)?, config: string | buffer?) -> string,
-    getCached: (resolvedPath: string) -> any?,
+    getCached: (resolvedPath: string) -> any?, 
 }
 --[[ sqlite ]]
 export type SQLite3Values = {
@@ -1369,13 +1369,13 @@ export type SQLite3Values = {
 }
 export type SQLite3Result = {
     last_insert_row_id: number,
-    changes: number,
+    changes: number, 
 }
 declare extern type SQLite3Statement with
     run: (self: SQLite3Statement, args: SQLite3Values?) -> SQLite3Result
     get: (self: SQLite3Statement, args: SQLite3Values?) -> SQLite3Values?
     all: (self: SQLite3Statement, args: SQLite3Values?) -> {SQLite3Values}
-    finalize: (self: SQLite3Statement) -> ()
+    finalize: (self: SQLite3Statement) -> () 
 end
 type TransactionKind = "deferred" | "immediate" | "exclusive"
 type TransactionFn = <A...,  R...>(self: SQLite3Database, callback: ((A...) ->  R...), kind: TransactionKind?) -> ((A...) ->  R...)
@@ -1383,10 +1383,10 @@ declare extern type SQLite3Database with
     transaction: TransactionFn
     query: (self: SQLite3Database, query: string | buffer) -> SQLite3Statement
     exec: (self: SQLite3Database, query: string | buffer, args: SQLite3Values?) -> SQLite3Result
-    close: (self: SQLite3Database) -> ()
+    close: (self: SQLite3Database) -> () 
 end
 export type _zune_sqlite = {
-    open: (path: string?) -> SQLite3Database,
+    open: (path: string?) -> SQLite3Database, 
 }
 --[[ task ]]
 export type _zune_task = {
@@ -1395,16 +1395,16 @@ export type _zune_task = {
     delay: <A...,  R...>(sec: number, f: ((A...) -> (R...)) | thread,  A...) -> thread,
     spawn: <A...,  R...>(f: ((A...) -> (R...)) | thread,  A...) -> thread,
     wait: (sec: number?) -> number,
-    count: (() -> number) & ((kinds: string) -> ...number),
+    count: (() -> number) & ((kinds: string) -> ...number), 
 }
 declare _FILE: {
-    main: boolean,
+    main: boolean, 
 }
 declare zune: {
     compiled: {
         optimize: number,
         debug: number,
-        mode: "debug" | "release",
+        mode: "debug" | "release", 
     }?,
     fs: _zune_fs,
     process: _zune_process,
@@ -1423,5 +1423,5 @@ declare zune: {
     random: _zune_random,
     thread: _zune_thread,
     mem: _zune_mem,
-    platform: _zune_platform,
+    platform: _zune_platform, 
 }
