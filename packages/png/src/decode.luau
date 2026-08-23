@@ -585,7 +585,7 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, FrameContext, buffer) -> b
 		local out = buffer.create(frame.width * frame.height * 4)
 
 		local cursor = 0
-		for offset = 0, frame.out_length - 1, 8 do
+		for offset = 0, buffer.len(data) - 1, 8 do
 			local r = buffer.readu16(data, offset) // 0x101
 			local g = buffer.readu16(data, offset + 2) // 0x101
 			local b = buffer.readu16(data, offset + 4) // 0x101
@@ -603,7 +603,7 @@ local CONVERT_TARGET: {[ColorTarget]: (DecodeContext, FrameContext, buffer) -> b
 		local out = buffer.create(frame.width * frame.height * 2 * 4)
 
 		local cursor = 0
-		for offset = 0, frame.out_length - 1, 4 do
+		for offset = 0, buffer.len(data) - 1, 4 do
 			local r = buffer.readu8(data, offset) * 0x101
 			local g = buffer.readu8(data, offset + 1) * 0x101
 			local b = buffer.readu8(data, offset + 2) * 0x101
