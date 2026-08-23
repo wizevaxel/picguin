@@ -463,7 +463,9 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 			end
 		end
 
-		local out = buffer.create(frame.width * frame.height * (bit_depth == 16 and 2 or 1) * 4)
+		local width = frame.width
+		local height = frame.height
+		local out = buffer.create(width * height * (bit_depth == 16 and 2 or 1) * 4)
 
 		if bit_depth == 16 then
 			if channels == 2 then
@@ -500,15 +502,28 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 				end
 			end
 		else
+			local row_length = frame.row_length
 			local scale = 255 // (2 ^ bit_depth - 1)
 			local field = 8 - bit_depth
+
 			local cursor = 0
-			for offset = 0, length - 1, 1 do
-				local byte = buffer.readu8(data, offset)
-				for shift = field, 0, -bit_depth do
-					local value = bit32.extract(byte, shift, bit_depth) * scale
-					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + (value == transparency and 0 or 0xFF000000))
-					cursor += 4
+			for y = 0, height - 1 do
+				local row_offset = y * row_length
+				local offset = 0
+
+				local x = 0
+				while x < width do
+					local byte = buffer.readu8(data, row_offset + offset)
+					offset += 1
+
+					local shift = field
+					while shift >= 0 and x < width do
+						local value = bit32.extract(byte, shift, bit_depth) * scale
+						buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + (value == transparency and 0 or 0xFF000000))
+						cursor += 4
+						x += 1
+						shift -= bit_depth
+					end
 				end
 			end
 		end
@@ -523,7 +538,9 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 		local palette = assert(parsed.palette)
 		local bit_depth = headers.bit_depth
 
-		local out = buffer.create(frame.width * frame.height * 4)
+		local width = frame.width
+		local height = frame.height
+		local out = buffer.create(width * height * 4)
 
 		if bit_depth == 8 then
 			local cursor = 0
@@ -532,13 +549,26 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 				cursor += 4
 			end
 		else
+			local row_length = frame.row_length
 			local field = 8 - bit_depth
 			local cursor = 0
-			for offset = 0, length - 1, 1 do
-				local byte = buffer.readu8(data, offset)
-				for shift = field, 0, -bit_depth do
-					buffer.writeu32(out, cursor, palette[bit32.extract(byte, shift, bit_depth) + 1])
-					cursor += 4
+
+			for y = 0, height - 1 do
+				local row_offset = y * row_length
+				local offset = 0
+
+				local x = 0
+				while x < width do
+					local byte = buffer.readu8(data, row_offset + offset)
+					offset += 1
+
+					local shift = field
+					while shift >= 0 and x < width do
+						buffer.writeu32(out, cursor, palette[bit32.extract(byte, shift, bit_depth) + 1])
+						cursor += 4
+						x += 1
+						shift -= bit_depth
+					end
 				end
 			end
 		end
