@@ -30,4 +30,4 @@ jobs:
         uses: CompeyDev/setup-rokit@v0.2.1
 
       - name: Run tests
-        run: zune run scripts/tests ${{ inputs.codec }}
+        run: zune test scripts/tests ${{ inputs.codec }}

@@ -7,3 +7,5 @@ testing.describe("crc32", function()
 		testing.expect(crc32(buffer.fromstring("123456789"), 0, 9)).toBe(0xCBF43926)
 	end)
 end)
+
+return nil

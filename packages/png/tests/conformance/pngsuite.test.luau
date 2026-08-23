@@ -55,3 +55,5 @@ testing.describe("pngsuite", function()
 		end
 	end)
 end)
+
+return nil
