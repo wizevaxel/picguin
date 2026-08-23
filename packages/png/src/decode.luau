@@ -397,9 +397,9 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 					+ bit32.byteswap(buffer.readu16(source, offset + 2))
 					+ bit32.byteswap(buffer.readu16(source, offset + 4)) * 0x10000
 			else
-				transparency = buffer.readu8(source, offset)
-					+ buffer.readu8(source, offset + 2) * 0x100
-					+ buffer.readu8(source, offset + 4) * 0x10000
+				transparency = buffer.readu8(source, offset + 1)
+					+ buffer.readu8(source, offset + 3) * 0x100
+					+ buffer.readu8(source, offset + 5) * 0x10000
 			end
 		end
 
@@ -408,23 +408,23 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 		if bit_depth == 16 then
 			if channels == 4 then
 				local cursor = 0
-				for offset = 0, length - 1, 4 do
-					local value0 = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+				for offset = 0, length - 1, 8 do
+					local rg = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
 						+ bit32.byteswap(buffer.readu16(data, offset + 2))
-					local value1 = bit32.byteswap(buffer.readu16(data, offset + 4))
+					local ba = bit32.byteswap(buffer.readu16(data, offset + 4) * 0x10000)
 						+ bit32.byteswap(buffer.readu16(data, offset + 6))
-					buffer.writeu32(out, cursor, value0)
-					buffer.writeu32(out, cursor + 4, value1 + bit32.byteswap(buffer.readu16(data, offset + 2)))
+					buffer.writeu32(out, cursor, rg)
+					buffer.writeu32(out, cursor + 4, ba)
 					cursor += 8
 				end
 			else
 				local cursor = 0
 				for offset = 0, length - 1, 6 do
-					local value0 = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					local rgb = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
 						+ bit32.byteswap(buffer.readu16(data, offset + 2))
-					local value1 = bit32.byteswap(buffer.readu16(data, offset + 4))
-					buffer.writeu32(out, cursor, value0)
-					buffer.writeu32(out, cursor + 4, value1 + (value0 + value1 == transparency and 0 or 0xFFFF0000))
+						+ bit32.byteswap(buffer.readu16(data, offset + 4)) * 0x10000
+					buffer.writeu32(out, cursor, rgb % 0x100000000)
+					buffer.writeu32(out, cursor + 4, rgb // 0x100000000 + (rgb == transparency and 0 or 0xFFFF0000))
 					cursor += 8
 				end
 			end
