@@ -434,8 +434,8 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 			else
 				local cursor = 0
 				for offset = 0, length - 1, 3 do
-					local value = buffer.readu16(data, offset) + buffer.readu8(data, offset + 2) * 0x10000
-					buffer.writeu32(out, cursor, value + (value == transparency and 0 or 0xFF000000))
+					local rgb = buffer.readu16(data, offset) + buffer.readu8(data, offset + 2) * 0x10000
+					buffer.writeu32(out, cursor, rgb + (rgb == transparency and 0 or 0xFF000000))
 					cursor += 4
 				end
 			end
@@ -455,12 +455,7 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 		if context.spans["tRNS"] then
 			local source = context.source
 			local offset = context.spans["tRNS"][1]
-
-			if bit_depth == 8 then
-				transparency = buffer.readu8(source, offset)
-			elseif bit_depth == 16 then
-				transparency = bit32.byteswap(buffer.readu16(source, offset) * 0x10000)
-			end
+			transparency = bit32.byteswap(buffer.readu16(source, offset) * 0x10000)
 		end
 
 		local width = frame.width
@@ -471,17 +466,18 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 			if channels == 2 then
 				local cursor = 0
 				for offset = 0, length - 1, 4 do
-					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
-					buffer.writeu32(out, cursor, value + value * 0x10000)
-					buffer.writeu32(out, cursor + 4, value + bit32.byteswap(buffer.readu16(data, offset + 2)))
+					local v = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					local a = bit32.byteswap(buffer.readu16(data, offset + 2) * 0x10000)
+					buffer.writeu32(out, cursor, v + v * 0x10000)
+					buffer.writeu32(out, cursor + 4, v + a * 0x10000)
 					cursor += 8
 				end
 			else
 				local cursor = 0
 				for offset = 0, length - 1, 2 do
-					local value = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
-					buffer.writeu32(out, cursor, value + value * 0x10000)
-					buffer.writeu32(out, cursor + 4, value + (value == transparency and 0 or 0xFFFF0000))
+					local v = bit32.byteswap(buffer.readu16(data, offset) * 0x10000)
+					buffer.writeu32(out, cursor, v + v * 0x10000)
+					buffer.writeu32(out, cursor + 4, v + (v == transparency and 0 or 0xFFFF0000))
 					cursor += 8
 				end
 			end
@@ -489,21 +485,21 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 			if channels == 2 then
 				local cursor = 0
 				for offset = 0, length - 1, 2 do
-					local value = buffer.readu8(data, offset)
-					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + buffer.readu8(data, offset + 1) * 0x1000000)
+					local v = buffer.readu8(data, offset)
+					buffer.writeu32(out, cursor, v + v * 0x100 + v * 0x10000 + buffer.readu8(data, offset + 1) * 0x1000000)
 					cursor += 4
 				end
 			else
 				local cursor = 0
 				for offset = 0, length - 1, 1 do
-					local value = buffer.readu8(data, offset)
-					buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + (value == transparency and 0 or 0xFF000000))
+					local v = buffer.readu8(data, offset)
+					buffer.writeu32(out, cursor, v + v * 0x100 + v * 0x10000 + (v == transparency and 0 or 0xFF000000))
 					cursor += 4
 				end
 			end
 		else
 			local row_length = frame.row_length
-			local scale = 255 // (2 ^ bit_depth - 1)
+			local scale = 255 // (bit32.lshift(1, bit_depth) - 1)
 			local field = 8 - bit_depth
 
 			local cursor = 0
@@ -518,8 +514,10 @@ local CONVERT_COLOR: {[types.ColorSpace]: (DecodeContext, FrameContext, buffer) 
 
 					local shift = field
 					while shift >= 0 and x < width do
-						local value = bit32.extract(byte, shift, bit_depth) * scale
-						buffer.writeu32(out, cursor, value + value * 0x100 + value * 0x10000 + (value == transparency and 0 or 0xFF000000))
+						local value = bit32.extract(byte, shift, bit_depth)
+						local v = value * scale
+						local a = value == transparency and 0 or 0xFF000000
+						buffer.writeu32(out, cursor, v + v * 0x100 + v * 0x10000 + a)
 						cursor += 4
 						x += 1
 						shift -= bit_depth
