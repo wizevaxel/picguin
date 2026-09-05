@@ -29,5 +29,8 @@ jobs:
       - name: Setup Rokit
         uses: CompeyDev/setup-rokit@v0.2.1
 
+      - name: Gather fixtures
+        run: zune run fixtures
+
       - name: Run tests
         run: zune test scripts/tests ${{ inputs.codec }}
