@@ -33,4 +33,4 @@ jobs:
         run: zune run fixtures
 
       - name: Run tests
-        run: zune test tests ${{ inputs.codec }}
+        run: zune test scripts/tests ${{ inputs.codec }}
