@@ -5,7 +5,7 @@ export default defineConfig({
 	title: "Picguin",
 	description: "High-performance Luau image codecs",
 	base: "/picguin/",
-	head: [["link", { rel: "icon", href: "/picguin/favicon.svg" }]],
+	head: [["link", { rel: "icon", href: "/picguin/picguin-favicon.svg" }]],
 	cleanUrls: true,
 
 	rewrites: {
@@ -13,7 +13,7 @@ export default defineConfig({
 	},
 
 	themeConfig: {
-		logo: "/logo.svg",
+		logo: "/picguin-logo.svg",
 
 		nav: [
 			{ text: "Guide", link: "/guide/introduction" },

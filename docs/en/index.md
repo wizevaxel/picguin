@@ -7,7 +7,7 @@ hero:
   text: /ˈpɪk.gwɪn/
   tagline: High-performance Luau image codecs
   image:
-    src: /logo.svg
+    src: /picguin-logo.svg
   actions:
     - theme: brand
       text: Get Started

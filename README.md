@@ -1,7 +1,7 @@
 <div align="center">
 	<picture>
-		<source media="(prefers-color-scheme: dark)" srcset="docs/public/heading-dark.svg" />
-		<img src="docs/public/heading-light.svg" height="192" />
+		<source media="(prefers-color-scheme: dark)" srcset="docs/public/picguin-heading-dark.svg" />
+		<img src="docs/public/picguin-heading-light.svg" height="192" />
 	</picture>
 </div>
 
