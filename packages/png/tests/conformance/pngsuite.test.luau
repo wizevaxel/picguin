@@ -5,7 +5,7 @@ local fs = zune.fs
 
 local png = require("../../src")
 
-local PNGSUITE_DIR = "packages/png/tests/fixtures/pngsuite"
+local PNGSUITE_DIR = "fixtures/png/tests/pngsuite"
 local HASHES: {[string]: {string}} = serde.json.decode(fs.readFile(`{PNGSUITE_DIR}/hashes.json`, false))
 
 local function get_input(name: string): buffer
