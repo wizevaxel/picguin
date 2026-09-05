@@ -1,10 +1,10 @@
 .pesde/
 *_packages/
+node_modules/
 
-docs/.vitepress/dist
-docs/.vitepress/cache
-docs/node_modules/
-
-release/
+/fixtures/
+/release/
+/docs/.vitepress/dist/
+/docs/.vitepress/cache/
 
 *.lock
