@@ -1,0 +1,7 @@
+[workspace]
+cwd = "."
+run_path = "scripts"
+
+[runtime.luau.options]
+optimization_level = 2
+native_code_gen = true
